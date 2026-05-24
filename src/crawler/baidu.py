@@ -14,7 +14,8 @@ def fetch_baidu(keyword: str) -> list[Article]:
     search_word = keyword.strip() or "热点"
     html = fetch_html(
         BAIDU_NEWS_URL,
-        params={"tn": "news", "word": search_word, "rn": "20"},
+        params={"tn": "news", "word": search_word, "rn": "20", "cl": "2"},
+        referer="https://www.baidu.com",
     )
     soup = BeautifulSoup(html, "lxml")
     articles: list[Article] = []

@@ -4,9 +4,10 @@
 
 ## 功能
 
-- 多平台热点抓取：知乎热榜、36氪、B站热门、百度新闻
-- 关键词过滤 + SQLite 本地持久化
+- **6 平台抓取**：知乎热榜、36氪、B站热门、百度新闻、微博热搜、今日头条
+- 关键词过滤 + SQLite 本地持久化（`~/.hothunter/articles.db`）
 - 卡片式结果展示，点击跳转原文
+- 按热度排序、CSV 导出（`~/.hothunter/exports/`）
 - 中文热词分析（正则分词 + Top10 词频）
 - 历史记录回顾
 
@@ -19,9 +20,10 @@ hothunter/
 │   ├── main.py             # 桌面/开发入口
 │   ├── config.py           # 平台、主题、停用词
 │   ├── models.py           # Article 数据模型
-│   ├── crawler/            # 各平台爬虫
-│   ├── storage/            # SQLite 存储
+│   ├── crawler/            # 各平台爬虫（6 个）
+│   ├── storage/            # SQLite + CSV 导出
 │   ├── analysis/           # 词频分析
+│   ├── utils/              # 热度排序
 │   └── ui/                 # Flet 界面
 ├── docs/prototype/         # HTML UI 原型
 ├── tests/
@@ -36,19 +38,19 @@ hothunter/
 cd /home/jwzhou/workspace/hothunter
 pip install -r requirements.txt
 python hotspot_app.py
-# 或
-python src/main.py
 ```
 
 ### 手机端（Flet App）
 
 1. 安装 Flet App（Android / iOS）
-2. 将 `hotspot_app.py` 及整个项目文件夹传到手机
+2. 将项目文件夹传到手机
 3. Flet App → Open File → 选择 `hotspot_app.py`
 
-## 数据存储
+### 运行测试
 
-SQLite 数据库默认路径：`~/.hothunter/articles.db`
+```bash
+python -m pytest tests/ -q
+```
 
 ## 设计文档
 

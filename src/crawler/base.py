@@ -15,24 +15,55 @@ from src.models import Article
 _ua = UserAgent()
 
 
-def get_headers() -> dict[str, str]:
-    return {
+def get_headers(*, referer: str | None = None, extra: dict[str, str] | None = None) -> dict[str, str]:
+    headers = {
         "User-Agent": _ua.random,
         "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
     }
+    if referer:
+        headers["Referer"] = referer
+    if extra:
+        headers.update(extra)
+    return headers
 
 
-def fetch_html(url: str, *, params: dict[str, str] | None = None) -> str:
+def fetch_html(
+    url: str,
+    *,
+    params: dict[str, str] | None = None,
+    referer: str | None = None,
+) -> str:
     time.sleep(REQUEST_DELAY_SEC)
-    response = requests.get(url, headers=get_headers(), params=params, timeout=15)
+    response = requests.get(url, headers=get_headers(referer=referer), params=params, timeout=15)
     response.raise_for_status()
     response.encoding = response.apparent_encoding or "utf-8"
     return response.text
 
 
-def fetch_json(url: str, *, params: dict[str, str] | None = None) -> dict:
+def fetch_json(
+    url: str,
+    *,
+    params: dict[str, str] | None = None,
+    referer: str | None = None,
+) -> dict:
     time.sleep(REQUEST_DELAY_SEC)
-    response = requests.get(url, headers=get_headers(), params=params, timeout=15)
+    response = requests.get(url, headers=get_headers(referer=referer), params=params, timeout=15)
+    response.raise_for_status()
+    return response.json()
+
+
+def fetch_json_post(
+    url: str,
+    payload: dict,
+    *,
+    referer: str | None = None,
+) -> dict:
+    time.sleep(REQUEST_DELAY_SEC)
+    headers = get_headers(
+        referer=referer,
+        extra={"Content-Type": "application/json"},
+    )
+    response = requests.post(url, json=payload, headers=headers, timeout=15)
     response.raise_for_status()
     return response.json()
 

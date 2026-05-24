@@ -9,7 +9,11 @@ BILIBILI_URL = "https://api.bilibili.com/x/web-interface/popular"
 
 
 def fetch_bilibili(keyword: str) -> list[Article]:
-    payload = fetch_json(BILIBILI_URL, params={"ps": "20", "pn": "1"})
+    payload = fetch_json(
+        BILIBILI_URL,
+        params={"ps": "20", "pn": "1"},
+        referer="https://www.bilibili.com",
+    )
     data = payload.get("data") or {}
     items = data.get("list") or []
     articles: list[Article] = []

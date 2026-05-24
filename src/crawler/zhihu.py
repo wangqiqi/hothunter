@@ -1,43 +1,43 @@
-"""知乎热榜爬虫。"""
+"""知乎热榜爬虫（官方 hot-list-web API）。"""
 
 from __future__ import annotations
 
-from bs4 import BeautifulSoup
-
-from src.crawler.base import fetch_html, filter_by_keyword, format_hot_count
+from src.crawler.base import fetch_json, filter_by_keyword
 from src.models import Article
 
-ZHIHU_URL = "https://www.zhihu.com/hot"
+ZHIHU_API = "https://www.zhihu.com/api/v3/feed/topstory/hot-list-web"
 
 
 def fetch_zhihu(keyword: str) -> list[Article]:
-    html = fetch_html(ZHIHU_URL)
-    soup = BeautifulSoup(html, "lxml")
+    payload = fetch_json(
+        ZHIHU_API,
+        params={"limit": "50", "desktop": "true"},
+        referer="https://www.zhihu.com/hot",
+    )
     articles: list[Article] = []
 
-    for item in soup.select(".HotList-item, .HotItem"):
-        title_el = item.select_one(".HotItem-title, h2")
-        if not title_el:
+    for item in payload.get("data") or []:
+        target = item.get("target") or {}
+        title_area = target.get("title_area") or {}
+        title = str(title_area.get("text") or "").strip()
+        if not title:
             continue
-        title = title_el.get_text(strip=True)
-        anchor = item.select_one("a[href]")
-        url = ""
-        if anchor and anchor.get("href"):
-            href = anchor["href"]
-            url = href if href.startswith("http") else f"https://www.zhihu.com{href}"
 
-        hot_el = item.select_one(".HotItem-metrics, .HotList-itemMetrics")
-        hot_value = hot_el.get_text(strip=True) if hot_el else ""
+        link = target.get("link") or {}
+        url = str(link.get("url") or "")
 
-        excerpt_el = item.select_one(".HotItem-excerpt")
-        snippet = excerpt_el.get_text(strip=True) if excerpt_el else title
+        metrics = target.get("metrics_area") or {}
+        hot_value = str(metrics.get("text") or "")
+
+        excerpt = target.get("excerpt_area") or {}
+        snippet = str(excerpt.get("text") or title)
 
         articles.append(
             Article(
                 title=title,
                 platform="知乎热榜",
                 url=url,
-                hot_value=hot_value or format_hot_count(len(articles) + 1),
+                hot_value=hot_value,
                 content_snippet=snippet,
             )
         )

@@ -1,50 +1,49 @@
 # 热点猎手 (Hotspot Hunter) 项目计划
 
 **日期**: 2026-05-24  
-**阶段**: Phase 2 — 目录整理 + 核心代码脚手架 + 可运行 MVP
+**阶段**: Phase 3 — 爬虫联调 + 功能增强 ✅
 
 ---
 
-## Phase 1（已完成）
+## Phase 3 任务列表
 
-- [x] 设计文档整理 → `DESIGN_SPEC.md`
-- [x] 项目脚手架目录（src/docs/tests/archive）
-- [x] requirements.txt / README / CHANGELOG / .gitignore
-- [x] git init + v0.1.0 tag
-
----
-
-## Phase 2 任务列表
-
-1. [x] 整理文件位置：`index.html` → `docs/prototype/index.html`
-2. [x] 创建 `src/config.py`（平台配置、停用词、主题色）
-3. [x] 创建 `src/models.py`（Article 数据结构）
-4. [x] 实现 `src/storage/db.py`（SQLite CRUD）
-5. [x] 实现 `src/crawler/`（base + 知乎/36氪/B站/百度）
-6. [x] 实现 `src/analysis/word_freq.py`（中文词频 Top10）
-7. [x] 实现 `src/ui/app.py`（Flet UI，对齐原型深色主题）
-8. [x] 创建入口 `src/main.py` + 根目录 `hotspot_app.py`
-9. [x] 更新 README.md、CHANGELOG.md（v0.2.0）
-10. [x] git commit + tag v0.2.0
+1. [x] 联调修复：知乎改 API、36氪改 Gateway POST
+2. [x] 新增平台：微博热搜、今日头条热榜
+3. [x] 实现热度数值解析与结果排序
+4. [x] 实现 CSV 导出
+5. [x] UI 增强：导出、排序开关、空状态、分平台计数
+6. [x] 单元测试（hot_sort、export，共 5 个用例通过）
+7. [x] 更新 README / CHANGELOG
+8. [x] git commit + tag v0.3.0
 
 ---
 
-## Phase 3（待办）
+## Phase 4（待办）
 
-- [ ] 各平台爬虫真实环境联调与选择器/API 修正
-- [ ] 热度数值排序、导出 CSV
-- [ ] 更多平台（微博、头条）
-- [ ] Flet 手机端实测与 UI 微调
+- [ ] Flet 手机端实测与 UI 微调（对齐 HTML 原型细节）
+- [ ] 关键词为空时的抓取策略优化（各平台默认行为）
+- [ ] 定时自动抓取、导出 JSON
+- [ ] 爬虫集成测试（mock 网络）
 
 ---
 
-## 执行规则
+## 联调结果（关键词 AI）
 
-- 工作目录：`/home/jwzhou/workspace/hothunter`
-- 提交前更新 CHANGELOG，提交信息与 CHANGELOG 一致
+| 平台 | 条数 | 状态 |
+|------|------|------|
+| 知乎 | 3 | ✅ API |
+| 36氪 | 4 | ✅ Gateway |
+| B站 | 1 | ✅ API |
+| 百度 | 19 | ✅ |
+| 微博 | 0* | ✅（无 AI 相关热搜时为空） |
+| 头条 | 0* | ✅（同上） |
+
+*空关键词时微博 51 条、头条 50 条
 
 ---
 
 ## 当前状态
 
-**Phase 2 已完成** — 可运行 MVP 就绪，Phase 3 待联调优化
+**Phase 3 已完成** — v0.3.0
+
+工作目录：`/home/jwzhou/workspace/hothunter`

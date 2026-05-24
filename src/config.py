@@ -16,6 +16,8 @@ PLATFORMS: list[PlatformMeta] = [
     {"id": "36kr", "name": "36氪", "icon": "氪"},
     {"id": "bilibili", "name": "B站热门", "icon": "B"},
     {"id": "baidu", "name": "百度新闻", "icon": "度"},
+    {"id": "weibo", "name": "微博热搜", "icon": "微"},
+    {"id": "toutiao", "name": "今日头条", "icon": "条"},
 ]
 
 DEFAULT_KEYWORD = "AI"

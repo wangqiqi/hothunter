@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-24
+
+### Added
+
+- 微博热搜、今日头条热榜爬虫
+- 热度数值解析与按热度排序（`src/utils/hot_sort.py`）
+- CSV 导出（`src/storage/export.py`，默认 `~/.hothunter/exports/`）
+- UI：导出按钮、按热度排序开关、空结果提示、分平台抓取计数
+
+### Fixed
+
+- 知乎：改用 `hot-list-web` API，解决 403
+- 36氪：改用 Gateway POST API，解决页面无 `__NEXT_DATA__` 问题
+- B站/百度：补充 Referer 请求头
+
+### Changed
+
+- `fetch_all` 返回各平台条数统计，默认按热度降序
+- 平台扩展至 6 个（知乎、36氪、B站、百度、微博、头条）
+
 ## [0.2.0] - 2026-05-24
 
 ### Added
