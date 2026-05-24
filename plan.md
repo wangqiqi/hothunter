@@ -1,36 +1,50 @@
 # 热点猎手 (Hotspot Hunter) 项目计划
 
-**日期**: 2026-05-24
-**目标**: 合理整理设计文档，初始化项目脚手架，git 初始化
+**日期**: 2026-05-24  
+**阶段**: Phase 2 — 目录整理 + 核心代码脚手架 + 可运行 MVP
 
-## 任务列表 (必须 >5 条，先写入 plan.md 审核)
+---
 
-1. 审核并整理用户提供的设计文档，生成结构化、精简的 `DESIGN_SPEC.md`（中文，合理分章节，去冗余，突出核心）。
-2. 在根目录创建标准 Python/Flet 项目脚手架目录结构（src 布局、docs、tests、archive 等）。
-3. 创建 `requirements.txt`（Flet, beautifulsoup4, fake-useragent, requests 等，带版本）。
-4. 创建 `README.md`（项目简介、快速开始、功能列表）。
-5. 初始化 git 仓库（`git init`），创建 `.gitignore`，并准备首次提交（但提交前必须更新 CHANGELOG.md）。
-6. 创建 `CHANGELOG.md`（逆序，初始版本）。
-7. （可选）创建基础代码框架文件（如 main.py 占位）。
-8. 所有变更记录到 plan.md 和 CHANGELOG.md，符合用户规则 6,7,10。
+## Phase 1（已完成）
 
-## 执行规则提醒
-- 每次 Shell/编辑前确认绝对路径 `/home/jwzhou/workspace/hothunter`
-- 回答使用中文
-- 任务完成后总结完成项 + 剩余项
-- 提交前先更新 CHANGELOG.md 并打 tag
-- 归档文件用 `archive/YYYYMMDD_HHMMSS_功能_模块说明.md`
-- 不在其他项目目录执行 git
+- [x] 设计文档整理 → `DESIGN_SPEC.md`
+- [x] 项目脚手架目录（src/docs/tests/archive）
+- [x] requirements.txt / README / CHANGELOG / .gitignore
+- [x] git init + v0.1.0 tag
+
+---
+
+## Phase 2 任务列表
+
+1. [x] 整理文件位置：`index.html` → `docs/prototype/index.html`
+2. [x] 创建 `src/config.py`（平台配置、停用词、主题色）
+3. [x] 创建 `src/models.py`（Article 数据结构）
+4. [x] 实现 `src/storage/db.py`（SQLite CRUD）
+5. [x] 实现 `src/crawler/`（base + 知乎/36氪/B站/百度）
+6. [x] 实现 `src/analysis/word_freq.py`（中文词频 Top10）
+7. [x] 实现 `src/ui/app.py`（Flet UI，对齐原型深色主题）
+8. [x] 创建入口 `src/main.py` + 根目录 `hotspot_app.py`
+9. [x] 更新 README.md、CHANGELOG.md（v0.2.0）
+10. [x] git commit + tag v0.2.0
+
+---
+
+## Phase 3（待办）
+
+- [ ] 各平台爬虫真实环境联调与选择器/API 修正
+- [ ] 热度数值排序、导出 CSV
+- [ ] 更多平台（微博、头条）
+- [ ] Flet 手机端实测与 UI 微调
+
+---
+
+## 执行规则
+
+- 工作目录：`/home/jwzhou/workspace/hothunter`
+- 提交前更新 CHANGELOG，提交信息与 CHANGELOG 一致
+
+---
 
 ## 当前状态
-- 工作目录: `/home/jwzhou/workspace/hothunter`
-- 已完成：
-  1. 整理设计文档 → DESIGN_SPEC.md（精简结构化）
-  2. 创建 src/ docs/ tests/ archive/ 脚手架目录
-  3. requirements.txt + .gitignore + README.md
-  4. CHANGELOG.md (v0.1.0 初始)
-  5. git init 完成
-- 剩余任务：创建基础 main.py 占位、首次 git commit（需先打 tag）、用户确认后继续实现爬虫等
-- 所有操作均在 `/home/jwzhou/workspace/hothunter` 绝对路径执行
 
-**plan 已执行部分，等待用户反馈继续或调整！**
+**Phase 2 已完成** — 可运行 MVP 就绪，Phase 3 待联调优化
