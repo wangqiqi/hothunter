@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-05-24
+
+### Added
+
+- **应用内阅读**：点击条目进入全屏阅读层（自动摘要 + Android/iOS/macOS 内嵌「原页」WebView），支持返回、复制链接、浏览器打开
+- `src/utils/article_content.py`、`src/ui/article_reader.py`、`tests/test_article_content.py`
+
+### Fixed
+
+- 修复 v0.10.0 列表点击回调与 `open_article` 签名不一致导致无法打开阅读页的问题
+
 ## [0.10.0] - 2026-05-24
 
 ### Added

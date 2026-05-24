@@ -14,6 +14,7 @@ from src.models import Article
 from src.modes import FetchMode, MODE_LABELS, analysis_keyword, storage_key
 from src.storage.db import ArticleStore
 from src.ui import components as ui
+from src.ui.article_reader import ArticleReader
 from src.ui import nav_chrome as chrome
 from src.ui.theme import (
     APP_MAX_WIDTH,
@@ -223,9 +224,23 @@ def run_app(page: ft.Page) -> None:
         platform_chips[pid] = chip
         return chip
 
-    def open_url(url: str) -> None:
-        if url:
-            page.launch_url(url)
+    _reader_ref: list[ArticleReader | None] = [None]
+    nav_visible_before_reader = True
+
+    def open_article(article: Article) -> None:
+        reader = _reader_ref[0]
+        if reader is None or not article.url:
+            if not article.url:
+                page.snack_bar = ft.SnackBar(ft.Text("该条目暂无链接"))
+                page.snack_bar.open = True
+                page.update()
+            return
+        nonlocal nav_visible_before_reader
+        nav_visible_before_reader = nav_visible
+        bottom_nav_wrapper.visible = False
+        bottom_edge_slot.visible = False
+        back_top_slot.visible = False
+        reader.open(article)
 
     def refresh_analysis_for_current_mode() -> None:
         user_kw = (keyword_field.value or DEFAULT_KEYWORD).strip()
@@ -262,7 +277,7 @@ def run_app(page: ft.Page) -> None:
                 ui.build_empty_state("无匹配结果", "调整筛选条件或清空标题筛选")
             )
         else:
-            results_column.controls.append(ui.build_articles_group(viewed, open_url))
+            results_column.controls.append(ui.build_articles_group(viewed, open_article))
         total = len(raw_articles)
         shown = len(viewed)
         if shown == total:
@@ -457,6 +472,14 @@ def run_app(page: ft.Page) -> None:
             back_top_host.content.bgcolor = p["primary"]
         refresh_list_display()
         refresh_analysis_for_current_mode()
+        if _reader_ref[0] is not None:
+            _reader_ref[0].apply_theme()
+
+    def on_reader_close() -> None:
+        bottom_nav_wrapper.visible = True
+        bottom_edge_slot.visible = True
+        back_top_slot.visible = True
+        set_nav_visible(nav_visible_before_reader)
 
     back_top_host = ui.build_back_to_top(visible=False, on_click=scroll_to_top)
     nav_anim = ft.Animation(chrome.NAV_ANIMATION_MS, ft.AnimationCurve.EASE_OUT)
@@ -623,6 +646,15 @@ def run_app(page: ft.Page) -> None:
         on_vertical_drag_update=on_bottom_drag_update,
         mouse_cursor=ft.MouseCursor.BASIC,
     )
+    bottom_edge_slot = ft.Container(
+        content=bottom_edge_zone,
+        left=0,
+        right=0,
+        bottom=0,
+    )
+
+    _reader_ref[0] = ArticleReader(page, on_close=on_reader_close)
+    reader_overlay = _reader_ref[0].control
 
     back_top_slot.content = back_top_host
     back_top_slot.right = 16
@@ -631,14 +663,10 @@ def run_app(page: ft.Page) -> None:
     shell_body = ft.Stack(
         [
             scroll_column,
-            ft.Container(
-                content=bottom_edge_zone,
-                left=0,
-                right=0,
-                bottom=0,
-            ),
+            bottom_edge_slot,
             bottom_nav_wrapper,
             back_top_slot,
+            reader_overlay,
         ],
         expand=True,
     )

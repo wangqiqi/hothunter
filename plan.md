@@ -18,7 +18,8 @@
 9. [x] onekey_start 端口占用修复（v0.7.0）
 10. [x] GitHub README + MIT LICENSE（v0.8.0）
 11. [x] 底部导航 + 返回顶部 + iOS 深色主题（v0.8.0）
-11b. [x] 底栏隐现（滚动/贴底/手势/悬停）+ SafeArea + 动态留白（Unreleased）
+11b. [x] 底栏隐现（滚动/贴底/手势/悬停）+ SafeArea + 动态留白（v0.10.0）
+11c. [x] 应用内阅读（摘要 + 内嵌 WebView / 浏览器兜底）（v0.11.0）
 12. [x] 浅色/深色双主题 + 分组列表样式（v0.9.0）
 13. [x] 应用图标 assets + 打包/窗口接入（v0.9.0）
 14. [x] 必接平台 12 源 + 自定义 sources.json（Unreleased）
