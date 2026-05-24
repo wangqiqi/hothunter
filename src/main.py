@@ -1,5 +1,6 @@
 """应用入口。"""
 
+import os
 import sys
 from pathlib import Path
 
@@ -13,7 +14,8 @@ from src.ui.app import run_app
 
 
 def main() -> None:
-    ft.app(target=run_app)
+    port = int(os.environ.get("HOTHUNTER_PORT", os.environ.get("FLET_SERVER_PORT", "8550")))
+    ft.app(target=run_app, port=port)
 
 
 if __name__ == "__main__":

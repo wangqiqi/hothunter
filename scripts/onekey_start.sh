@@ -88,12 +88,64 @@ activate_venv_if_exists() {
     fi
 }
 
+port_pids() {
+    local port="${1:-$DEFAULT_PORT}"
+    if command -v ss >/dev/null 2>&1; then
+        ss -tlnp 2>/dev/null | grep -E ":${port}[[:space:]]" | sed -n 's/.*pid=\([0-9][0-9]*\).*/\1/p' || true
+        return
+    fi
+    if command -v lsof >/dev/null 2>&1; then
+        lsof -ti ":$port" 2>/dev/null || true
+        return
+    fi
+    fuser -n tcp "$port" 2>/dev/null || true
+}
+
+port_in_use() {
+    [[ -n "$(port_pids "$DEFAULT_PORT" | head -1)" ]]
+}
+
+flet_app_pids() {
+    pgrep -f "hotspot_app\\.py" 2>/dev/null || true
+    pgrep -f "flet run.*hotspot_app" 2>/dev/null || true
+}
+
+kill_dev_servers() {
+    local pid
+    for pid in $(flet_app_pids); do
+        kill "$pid" 2>/dev/null || true
+    done
+    pkill -f "flet.*localhost:${DEFAULT_PORT}" 2>/dev/null || true
+    pkill -f "flet.*tcp://localhost:${DEFAULT_PORT}" 2>/dev/null || true
+    for pid in $(port_pids "$DEFAULT_PORT"); do
+        kill "$pid" 2>/dev/null || true
+    done
+    sleep 1
+    for pid in $(flet_app_pids); do
+        kill -9 "$pid" 2>/dev/null || true
+    done
+    pkill -9 -f "flet.*localhost:${DEFAULT_PORT}" 2>/dev/null || true
+    for pid in $(port_pids "$DEFAULT_PORT"); do
+        kill -9 "$pid" 2>/dev/null || true
+    done
+}
+
 is_running() {
     [[ -f "$PID_FILE" ]] || return 1
     local pid
     pid="$(cat "$PID_FILE" 2>/dev/null || true)"
-    [[ -n "$pid" ]] || return 1
-    kill -0 "$pid" 2>/dev/null
+    [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null && port_in_use
+}
+
+log_mark_start() {
+    echo "===== $(date -Iseconds) start port=$DEFAULT_PORT =====" >>"$LOG_FILE"
+}
+
+log_has_start_error() {
+    [[ -f "$LOG_FILE" ]] || return 1
+    local block
+    block="$(awk '/===== .* start port=/{buf=$0; next} {buf=buf ORS $0} END{print buf}' "$LOG_FILE")"
+    echo "$block" | grep -qE 'Traceback|address already in use|OSError:' 2>/dev/null
 }
 
 cmd_env() {
@@ -103,8 +155,13 @@ cmd_env() {
 cmd_start() {
     ensure_runtime_dir
     if is_running; then
-        warn "已在运行 (PID $(cat "$PID_FILE"))，请先 stop 或 restart"
+        warn "已在运行 (port=$DEFAULT_PORT)，请先 stop 或 restart"
         return 0
+    fi
+    if port_in_use; then
+        warn "端口 $DEFAULT_PORT 被占用，正在清理旧进程..."
+        kill_dev_servers
+        sleep 1
     fi
     activate_venv_if_exists
     local py flet_bin
@@ -113,44 +170,50 @@ cmd_start() {
         err "未检测到 flet，请先执行: ./scripts/onekey_env.sh install"
         exit 1
     fi
-    flet_bin="$("$py" -m flet --help >/dev/null 2>&1 && echo "$py -m flet" || echo flet)"
-    info "启动本地调试 (port=$DEFAULT_PORT, 热重载)..."
+    info "启动本地调试 (port=$DEFAULT_PORT)..."
     info "日志: $LOG_FILE"
-    nohup bash -c "$flet_bin run \"$APP_SCRIPT\" -p $DEFAULT_PORT -r -d" \
-        >>"$LOG_FILE" 2>&1 &
+    log_mark_start
+    HOTHUNTER_PORT="$DEFAULT_PORT" nohup "$py" "$APP_SCRIPT" >>"$LOG_FILE" 2>&1 &
     echo $! >"$PID_FILE"
-    sleep 2
-    if is_running; then
-        ok "已启动 PID $(cat "$PID_FILE")，桌面窗口应已弹出"
+    sleep 4
+    if is_running && ! log_has_start_error; then
+        ok "已启动 port=$DEFAULT_PORT (PID $(cat "$PID_FILE"))，桌面窗口应已弹出"
         info "查看日志: ./scripts/onekey_start.sh logs"
     else
-        err "启动失败，最近日志:"
+        err "启动失败（端口未监听或日志有报错），最近日志:"
         tail -n 30 "$LOG_FILE" 2>/dev/null || true
+        kill_dev_servers
         rm -f "$PID_FILE"
         exit 1
     fi
 }
 
 cmd_stop() {
-    if ! is_running; then
-        warn "未在运行"
-        rm -f "$PID_FILE"
-        return 0
+    local had_service=false
+    if is_running || port_in_use; then
+        had_service=true
     fi
-    local pid
-    pid="$(cat "$PID_FILE")"
-    info "停止 PID $pid ..."
-    kill "$pid" 2>/dev/null || true
-    sleep 1
-    if kill -0 "$pid" 2>/dev/null; then
-        kill -9 "$pid" 2>/dev/null || true
+    if [[ -f "$PID_FILE" ]]; then
+        local pid
+        pid="$(cat "$PID_FILE")"
+        if kill -0 "$pid" 2>/dev/null; then
+            info "停止 wrapper PID $pid ..."
+            kill "$pid" 2>/dev/null || true
+        fi
     fi
+    kill_dev_servers
     rm -f "$PID_FILE"
-    ok "已停止"
+    if $had_service; then
+        ok "已停止（已释放端口 $DEFAULT_PORT）"
+    else
+        warn "未在运行"
+    fi
 }
 
 cmd_restart() {
+    info "重启调试服务..."
     cmd_stop
+    sleep 1
     cmd_start
 }
 
@@ -161,9 +224,14 @@ cmd_status() {
 
     echo -e "${BOLD}[进程]${NC}"
     if is_running; then
-        ok "调试进程运行中 PID $(cat "$PID_FILE") port=$DEFAULT_PORT"
+        ok "调试服务运行中 port=$DEFAULT_PORT flet PID(s): $(flet_app_pids | tr '\n' ' ')"
+        [[ -f "$PID_FILE" ]] && echo "  wrapper PID: $(cat "$PID_FILE")"
     else
         warn "调试进程未运行"
+        if port_in_use; then
+            warn "端口 $DEFAULT_PORT 仍被占用: PID $(port_pids "$DEFAULT_PORT" | tr '\n' ' ')"
+            echo "  建议: ./scripts/onekey_start.sh stop"
+        fi
     fi
     echo
 

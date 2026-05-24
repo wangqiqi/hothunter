@@ -13,9 +13,9 @@ from src.crawler.registry import fetch_all
 from src.models import Article
 from src.modes import FetchMode, MODE_LABELS, analysis_keyword, storage_key
 from src.storage.db import ArticleStore
-from src.storage.export import export_articles_csv
 from src.ui import components as ui
 from src.ui.theme import APP_MAX_WIDTH, BORDER
+from src.utils.article_view import ALL_PLATFORMS, DEFAULT_SORT, SORT_OPTIONS, apply_view
 from src.utils.refresh_scheduler import format_next_hour, seconds_until_next_hour
 
 
@@ -32,7 +32,7 @@ def run_app(page: ft.Page) -> None:
 
     store = ArticleStore()
     platform_states: dict[str, bool] = {p["id"]: True for p in PLATFORMS}
-    current_articles: list[Article] = []
+    raw_articles: list[Article] = []
     current_keyword = DEFAULT_KEYWORD
     current_mode = FetchMode.STREAM
     is_fetching = False
@@ -91,11 +91,39 @@ def run_app(page: ft.Page) -> None:
     results_column = ft.Column(spacing=12)
     analysis_wrap = ft.Row(wrap=True, spacing=10, run_spacing=10)
 
-    sort_by_hot_switch = ft.Switch(
-        label="按热度排序",
-        value=True,
-        active_color=THEME["primary"],
-        label_style=ft.TextStyle(color=THEME["text_secondary"], size=13),
+    sort_dropdown = ft.Dropdown(
+        label="排序方式",
+        value=DEFAULT_SORT,
+        options=[ft.dropdown.Option(key, label) for key, label in SORT_OPTIONS.items()],
+        border_color=BORDER,
+        focused_border_color=THEME["primary"],
+        bgcolor=THEME["bg_card"],
+        color=THEME["text_primary"],
+        expand=True,
+    )
+
+    list_filter_field = ft.TextField(
+        label="标题筛选",
+        hint_text="在当前结果中按标题关键词过滤",
+        border_color="transparent",
+        focused_border_color=THEME["primary"],
+        bgcolor=THEME["bg_card"],
+        color=THEME["text_primary"],
+        border_radius=12,
+        content_padding=ft.padding.symmetric(horizontal=16, vertical=12),
+        expand=True,
+    )
+
+    platform_filter = ft.Dropdown(
+        label="平台筛选",
+        value=ALL_PLATFORMS,
+        options=[ft.dropdown.Option(ALL_PLATFORMS, "全部平台")]
+        + [ft.dropdown.Option(p["name"], p["name"]) for p in PLATFORMS],
+        border_color=BORDER,
+        focused_border_color=THEME["primary"],
+        bgcolor=THEME["bg_card"],
+        color=THEME["text_primary"],
+        expand=True,
     )
 
     fetch_btn_content = ft.Row(
@@ -134,17 +162,6 @@ def run_app(page: ft.Page) -> None:
         padding=ft.padding.symmetric(vertical=16, horizontal=20),
         expand=True,
         ink=True,
-    )
-
-    export_btn = ft.OutlinedButton(
-        "导出 CSV",
-        icon=ft.Icons.DOWNLOAD,
-        style=ft.ButtonStyle(
-            color=THEME["text_primary"],
-            side=ft.BorderSide(1, BORDER),
-            shape=ft.RoundedRectangleBorder(radius=12),
-        ),
-        expand=True,
     )
 
     platform_chips: dict[str, ft.Container] = {}
@@ -242,23 +259,43 @@ def run_app(page: ft.Page) -> None:
             for idx, (word, count) in enumerate(words):
                 analysis_wrap.controls.append(ui.build_word_tag(word, count, idx))
 
-    def show_articles(articles: list[Article]) -> None:
-        nonlocal current_articles
-        current_articles = articles
+    def refresh_list_display() -> None:
+        viewed = apply_view(
+            raw_articles,
+            sort_key=sort_dropdown.value or DEFAULT_SORT,
+            title_keyword=list_filter_field.value or "",
+            platform=platform_filter.value or ALL_PLATFORMS,
+        )
         results_column.controls.clear()
-        if not articles:
+        if not raw_articles:
             hint = (
                 "尝试勾选更多热榜平台"
                 if current_mode == FetchMode.STREAM
                 else "尝试更换关键词或勾选更多平台"
             )
             results_column.controls.append(ui.build_empty_state("暂无结果", hint))
+        elif not viewed:
+            results_column.controls.append(
+                ui.build_empty_state("无匹配结果", "调整筛选条件或清空标题筛选")
+            )
         else:
-            for article in articles:
+            for article in viewed:
                 results_column.controls.append(ui.build_article_card(article, open_url))
-        results_count_text.value = f"{len(articles)} 条结果"
-        export_btn.disabled = not articles
+        total = len(raw_articles)
+        shown = len(viewed)
+        if shown == total:
+            results_count_text.value = f"{total} 条结果"
+        else:
+            results_count_text.value = f"{shown} / {total} 条"
         page.update()
+
+    def set_raw_articles(articles: list[Article]) -> None:
+        nonlocal raw_articles
+        raw_articles = articles
+        refresh_list_display()
+
+    def on_view_change(_: ft.ControlEvent) -> None:
+        refresh_list_display()
 
     def set_status(message: str, *, active: bool = False, count: str = "") -> None:
         status_message.value = message
@@ -270,7 +307,6 @@ def run_app(page: ft.Page) -> None:
         fetch_btn.opacity = 0.7 if loading else 1.0
         fetch_btn.disabled = loading
         history_btn.disabled = loading
-        export_btn.disabled = loading or not current_articles
         set_status(
             message or f"就绪 · {MODE_LABELS[current_mode]}",
             active=loading,
@@ -293,7 +329,7 @@ def run_app(page: ft.Page) -> None:
         is_fetching = False
         if articles:
             store.save_articles(articles, db_key)
-        show_articles(articles)
+        set_raw_articles(articles)
         refresh_analysis_for_current_mode()
         update_refresh_hint()
         parts = [format_counts(counts), f"共 {len(articles)} 条"]
@@ -335,7 +371,7 @@ def run_app(page: ft.Page) -> None:
                     selected,
                     user_kw,
                     mode=current_mode,
-                    sort_by_hot=bool(sort_by_hot_switch.value),
+                    sort_by_hot=False,
                 )
                 on_fetch_complete(articles, errors, counts, db_key, reason=reason)
             except Exception as exc:  # noqa: BLE001
@@ -355,26 +391,10 @@ def run_app(page: ft.Page) -> None:
         db_key = storage_key(current_mode, user_kw)
         set_loading(True, "加载历史记录...")
 
-        from src.utils.hot_sort import sort_by_hot_value
-
         articles = store.get_history(db_key)
-        if sort_by_hot_switch.value:
-            articles = sort_by_hot_value(articles)
-        show_articles(articles)
+        set_raw_articles(articles)
         refresh_analysis_for_current_mode()
         set_loading(False, f"已加载 {MODE_LABELS[current_mode]} 历史 {len(articles)} 条")
-
-    def do_export(_: ft.ControlEvent) -> None:
-        if not current_articles:
-            page.snack_bar = ft.SnackBar(ft.Text("没有可导出的数据"))
-            page.snack_bar.open = True
-            page.update()
-            return
-        export_label = storage_key(current_mode, current_keyword)
-        path = export_articles_csv(current_articles, keyword=export_label)
-        page.snack_bar = ft.SnackBar(ft.Text(f"已导出: {path}"))
-        page.snack_bar.open = True
-        page.update()
 
     def hourly_scheduler_loop() -> None:
         while not stop_scheduler.is_set():
@@ -390,7 +410,9 @@ def run_app(page: ft.Page) -> None:
 
     fetch_btn.on_click = do_fetch
     history_btn.on_click = do_history
-    export_btn.on_click = do_export
+    sort_dropdown.on_change = on_view_change
+    list_filter_field.on_change = on_view_change
+    platform_filter.on_change = on_view_change
 
     def on_page_close(_: ft.ControlEvent) -> None:
         stop_scheduler.set()
@@ -412,11 +434,13 @@ def run_app(page: ft.Page) -> None:
                 keyword_field,
                 ui.section_label("选择平台", "grid"),
                 platform_grid_rows,
-                sort_by_hot_switch,
                 hourly_refresh_switch,
                 refresh_hint,
                 ft.Row([fetch_btn, history_btn], spacing=12),
-                ft.Row([export_btn], spacing=10),
+                ui.section_label("列表排序与筛选", "list"),
+                sort_dropdown,
+                ft.Row([list_filter_field], spacing=10),
+                platform_filter,
             ],
             spacing=14,
         )
@@ -473,7 +497,6 @@ def run_app(page: ft.Page) -> None:
 
     apply_mode_ui()
     update_refresh_hint()
-    export_btn.disabled = True
     set_status(f"就绪 · {MODE_LABELS[current_mode]}")
     refresh_analysis_for_current_mode()
 

@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-05-24
+
+### Added
+
+- 列表排序与筛选：热度升降、标题 A-Z、抓取时间、按平台（`src/utils/article_view.py`）
+- 标题关键词、单平台过滤，结果计数显示 `筛选数 / 总数`
+
+### Removed
+
+- UI 移除「导出 CSV」按钮
+
+### Changed
+
+- `onekey_start.sh`：启动前清理 8550 端口占用，改用 `python hotspot_app.py`，增强启动校验
+- `src/main.py`：支持 `HOTHUNTER_PORT` 环境变量
+
 ## [0.6.0] - 2026-05-24
 
 ### Added
