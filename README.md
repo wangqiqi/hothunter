@@ -1,93 +1,169 @@
-# 热点猎手 (Hotspot Hunter)
+# 热点猎手 Hotspot Hunter
 
-基于 **Flet + Python** 的纯本地移动端热点抓取与分析工具。
+**把多平台热榜装进手机 — 纯本地、可打包 APK、无需 Flet App**
 
-## 功能
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![Flet](https://img.shields.io/badge/Flet-0.25-6366f1)](https://flet.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-pytest-0A9EDC?logo=pytest&logoColor=white)](tests/)
 
-- **双模式**：
-  - **实时流热点** — 各平台当前热榜，全量抓取
-  - **定制热点** — 按关键词过滤 / 百度搜索
-- **自动刷新**：打开时刷新、手动刷新、整点每小时刷新（可关闭）
-- **6 平台**：知乎、36氪、B站、微博、头条（实时）；百度新闻（仅定制）
-- 关键词过滤 + SQLite 本地持久化（`~/.hothunter/articles.db`）
-- 卡片式结果展示，点击跳转原文
-- 列表多种排序（热度/标题/时间/平台）与标题、平台筛选
-- 中文热词分析（正则分词 + Top10 词频）
-- 历史记录回顾
+热点猎手是一款基于 **Python + Flet** 的移动端热点聚合工具：一次刷新，纵览知乎、微博、B 站等平台热榜；支持关键词定制、本地历史、热词分析与多种排序筛选。数据落在本机 SQLite，不依赖云端账号。
+
+---
+
+## 亮点
+
+| | |
+|---|---|
+| **双模式抓取** | **实时流**：全平台当前热榜 · **定制**：按关键词过滤 / 百度搜索 |
+| **6 大平台** | 知乎 · 36氪 · B站 · 微博 · 头条 · 百度新闻（定制） |
+| **自动刷新** | 启动刷新 · 手动刷新 · 整点每小时（可关） |
+| **本地优先** | SQLite 持久化 `~/.hothunter/articles.db`，历史可回看 |
+| **列表掌控** | 热度 / 标题 / 时间 / 平台排序 + 标题与平台筛选 |
+| **热词洞察** | 中文分词 + Top10 词频，快速感知话题密度 |
+| **一键脚本** | 环境安装、本地调试、APK 打包、`adb` 安装 |
+| **国内友好** | 独立 APK 分发，不依赖 Google Play 的 Flet App |
+
+---
+
+## 界面预览
+
+深色移动端 UI（430px 手机壳），对齐 [HTML 原型](docs/prototype/index.html)：渐变顶栏、双列平台选择、卡片式热点列表、热词标签云。
+
+> 本地运行：`./scripts/onekey_start.sh start` 即可在桌面预览。
+
+---
+
+## 快速开始
+
+### 环境要求
+
+- Python **3.10+**
+- Linux / macOS / Windows（开发）；Android（APK 运行）
+- 打包 APK 时首次会自动拉取 JDK 17、Android SDK（耗时较长）
+
+### 1. 克隆与安装
+
+```bash
+git clone https://github.com/YOUR_USERNAME/hothunter.git
+cd hothunter
+chmod +x scripts/onekey_env.sh scripts/onekey_start.sh
+
+./scripts/onekey_env.sh install    # 创建 .venv 并安装依赖
+```
+
+### 2. 本地调试
+
+```bash
+./scripts/onekey_start.sh start    # 启动桌面窗口
+./scripts/onekey_start.sh status   # 查看进程与端口
+./scripts/onekey_start.sh stop       # 停止
+```
+
+无参数运行 `./scripts/onekey_start.sh` 或 `./scripts/onekey_env.sh` 进入**交互菜单**。
+
+### 3. 打包安装到手机（推荐国内分发）
+
+```bash
+./scripts/onekey_start.sh build-apk      # 产物 → dist/apk/
+./scripts/onekey_start.sh install-apk    # 需 adb + USB 调试
+```
+
+将 `dist/apk/` 下对应 ABI 的 APK 发给用户即可安装；无需应用商店、无需 Flet App。
+
+### 手动运行（可选）
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python hotspot_app.py
+```
+
+---
+
+## 脚本速查
+
+### `onekey_env.sh` — 环境
+
+| 命令 | 说明 |
+|------|------|
+| `check` | 检查 Python / venv / 依赖 |
+| `install` | 创建 `.venv` 并安装依赖 |
+| `sync` | 同步 `requirements.txt` |
+| `doctor` | 完整诊断 |
+| `upgrade` / `reinstall` | 升级或重建环境 |
+
+### `onekey_start.sh` — 运行与打包
+
+| 命令 | 说明 |
+|------|------|
+| `start` / `stop` / `restart` | 本地调试 |
+| `status` / `logs` | 状态与日志 |
+| `test` | `pytest` 单元测试 |
+| `build-apk` / `build-aab` / `build-all` | Android 打包 |
+| `install-apk` | adb 安装 |
+| `clean` | 清理构建与运行时缓存 |
+
+环境变量：`HOTHUNTER_PORT`（默认 `8550`）
+
+---
+
+## 支持平台
+
+| 平台 | 实时流 | 定制热点 |
+|------|:------:|:--------:|
+| 知乎热榜 | ✅ | ✅ |
+| 36氪 | ✅ | ✅ |
+| B站热门 | ✅ | ✅ |
+| 微博热搜 | ✅ | ✅ |
+| 今日头条 | ✅ | ✅ |
+| 百度新闻 | — | ✅（搜索） |
+
+---
 
 ## 项目结构
 
 ```
 hothunter/
-├── hotspot_app.py          # Flet App 入口（打包 / 本地调试）
-├── pyproject.toml          # Flet 打包配置
+├── hotspot_app.py          # 应用入口（调试 / 打包）
+├── pyproject.toml          # 版本与 Flet Android 配置
 ├── scripts/
-│   ├── onekey_env.sh       # 环境检查 / 安装 / 维护
-│   └── onekey_start.sh     # 调试 / 打包 / 运行
+│   ├── onekey_env.sh       # 环境管理
+│   └── onekey_start.sh     # 调试 / 打包 / 安装
 ├── src/
-│   ├── main.py             # 桌面/开发入口
-│   ├── config.py           # 平台、主题、停用词
-│   ├── models.py           # Article 数据模型
-│   ├── crawler/            # 各平台爬虫（6 个）
-│   ├── storage/            # SQLite + CSV 导出
+│   ├── crawler/            # 各平台爬虫
+│   ├── ui/                 # Flet 界面（对齐原型）
+│   ├── storage/            # SQLite
 │   ├── analysis/           # 词频分析
-│   ├── utils/              # 热度排序
-│   └── ui/                 # Flet 界面
-├── docs/prototype/         # HTML UI 原型
-├── tests/
-└── archive/
+│   └── utils/              # 排序、筛选、调度
+├── docs/
+│   ├── DESIGN_SPEC.md      # 设计规范
+│   └── prototype/          # HTML UI 原型
+└── tests/
 ```
 
-## 快速开始
+---
 
-### 一键脚本（推荐）
-
-```bash
-cd /home/jwzhou/workspace/hothunter
-chmod +x scripts/onekey_env.sh scripts/onekey_start.sh
-
-# 环境（首次或依赖变更）
-./scripts/onekey_env.sh check          # 只检查，不改动
-./scripts/onekey_env.sh install        # 创建 .venv + 安装依赖
-./scripts/onekey_env.sh                # 无参数进入环境交互菜单
-
-# 运行与打包
-./scripts/onekey_start.sh start        # 本地调试（桌面窗口 + 热重载）
-./scripts/onekey_start.sh status       # 查看状态
-./scripts/onekey_start.sh build-apk    # 打包 APK → dist/apk/
-./scripts/onekey_start.sh install-apk  # adb 安装到已连接手机
-./scripts/onekey_start.sh              # 无参数进入运行交互菜单
-```
-
-**onekey_env.sh**：`check` `install` `sync` `upgrade` `reinstall` `doctor` `freeze` `clean`  
-**onekey_start.sh**：`env`（同 install）`start` `stop` `restart` `status` `logs` `test` `clean` `build-apk` `build-aab` `build-all` `install-apk`
-
-### 桌面开发（手动）
+## 开发
 
 ```bash
-pip install -r requirements.txt
-python hotspot_app.py
-```
-
-### 手机端（独立 APK，推荐国内分发）
-
-1. 开发机执行 `./scripts/onekey_start.sh build-apk`
-2. 将 `dist/apk/` 下 APK 传到手机安装（或 `install-apk`）
-3. 首次 `build-apk` 会自动下载 JDK 17 / Android SDK，耗时较长
-
-> **说明**：Flet App（Google Play 调试客户端）在国内应用商店不可用，正式使用请走 APK 打包。
-
-### 运行测试
-
-```bash
+./scripts/onekey_start.sh test
+# 或
 python -m pytest tests/ -q
 ```
 
-## 设计文档
+变更记录见 [CHANGELOG.md](CHANGELOG.md)。
 
-- [docs/DESIGN_SPEC.md](docs/DESIGN_SPEC.md) — 设计规范
-- [docs/prototype/index.html](docs/prototype/index.html) — UI 原型
+---
+
+## 免责声明
+
+本项目仅供学习与个人效率使用。请遵守各平台服务条款与 robots 协议，合理控制抓取频率；内容版权归各平台及原作者所有，本工具不托管、不分发第三方全文。
+
+---
 
 ## 许可证
 
-MIT
+本项目采用 [MIT License](LICENSE) 开源。
+
+如果对你有帮助，欢迎 **Star** 支持后续迭代。

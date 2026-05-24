@@ -83,18 +83,20 @@ STOPWORDS: frozenset[str] = frozenset(
     }
 )
 
-# 对齐 docs/prototype/index.html 深色主题
+# iOS 深色模式色系（紧凑布局见 src/ui/theme.py）
 THEME = {
-    "primary": "#6366f1",
-    "primary_light": "#818cf8",
-    "primary_dark": "#4f46e5",
-    "bg_primary": "#0f172a",
-    "bg_secondary": "#1e293b",
-    "bg_card": "#334155",
-    "text_primary": "#f8fafc",
-    "text_secondary": "#94a3b8",
-    "text_muted": "#64748b",
-    "success": "#10b981",
-    "warning": "#f59e0b",
-    "danger": "#ef4444",
+    "primary": "#0A84FF",
+    "primary_light": "#409CFF",
+    "primary_dark": "#0066CC",
+    "bg_primary": "#000000",
+    "bg_secondary": "#1C1C1E",
+    "bg_card": "#2C2C2E",
+    "bg_elevated": "#3A3A3C",
+    "text_primary": "#FFFFFF",
+    "text_secondary": "#98989D",
+    "text_muted": "#636366",
+    "separator": "#38383A",
+    "success": "#30D158",
+    "warning": "#FF9F0A",
+    "danger": "#FF453A",
 }

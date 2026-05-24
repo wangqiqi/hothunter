@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-05-24
+
+### Added
+
+- 底部快速导航（热点 / 历史 / 分析 / 设置）与「返回顶部」浮动按钮
+- [LICENSE](LICENSE)（MIT）
+- GitHub 公开版 [README.md](README.md)（徽章、亮点、平台表、免责声明）
+
+### Changed
+
+- UI 主题切换为 **iOS 深色紧凑风格**（`src/config.py`、`src/ui/theme.py`）
+- 紧凑间距与圆角 token，优化卡片与导航布局
+
 ## [0.7.0] - 2026-05-24
 
 ### Added

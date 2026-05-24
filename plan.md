@@ -1,7 +1,7 @@
 # 热点猎手 (Hotspot Hunter) 项目计划
 
 **日期**: 2026-05-24  
-**阶段**: Phase 6 — 列表排序筛选 + 启动脚本修复（v0.7.0）
+**阶段**: Phase 6 — GitHub 开源与 iOS 风格 UI（v0.8.0）
 
 ---
 
@@ -10,13 +10,15 @@
 1. [x] 添加 `pyproject.toml`（Flet 打包配置 + 网络权限）
 2. [x] 添加 `scripts/onekey_env.sh` + `onekey_start.sh`（环境 / 调试 / 打包）
 3. [x] 更新 README 部署说明（APK 为主，Flet App 为辅）
-4. [ ] 本地 `start` 调试 UI 验证（已重构，待肉眼确认）
+4. [ ] 本地 `start` 调试 UI 验证（已加底部导航与返回顶部，待肉眼确认）
 5. [ ] `build-apk` 首次构建实测
 6. [ ] 手机 `install-apk` 实测
 7. [x] Flet UI 对齐 HTML 原型（首版）
 8. [x] 列表排序与筛选，移除 CSV 导出 UI（v0.7.0）
 9. [x] onekey_start 端口占用修复（v0.7.0）
-10. [ ] 爬虫集成测试（mock 网络）
+10. [x] GitHub README + MIT LICENSE（v0.8.0）
+11. [x] 底部导航 + 返回顶部 + iOS 深色主题（v0.8.0）
+12. [ ] 爬虫集成测试（mock 网络）
 
 ---
 

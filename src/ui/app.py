@@ -14,7 +14,18 @@ from src.models import Article
 from src.modes import FetchMode, MODE_LABELS, analysis_keyword, storage_key
 from src.storage.db import ArticleStore
 from src.ui import components as ui
-from src.ui.theme import APP_MAX_WIDTH, BORDER
+from src.ui.theme import (
+    APP_MAX_WIDTH,
+    BORDER,
+    FONT_FAMILY,
+    PAGE_PAD_H,
+    RADIUS_LG,
+    SPACE_MD,
+    SPACE_SM,
+    grouped_surface,
+    ios_filled_button_style,
+    ios_secondary_button_style,
+)
 from src.utils.article_view import ALL_PLATFORMS, DEFAULT_SORT, SORT_OPTIONS, apply_view
 from src.utils.refresh_scheduler import format_next_hour, seconds_until_next_hour
 
@@ -22,9 +33,10 @@ from src.utils.refresh_scheduler import format_next_hour, seconds_until_next_hou
 def run_app(page: ft.Page) -> None:
     page.title = "热点猎手"
     page.theme_mode = ft.ThemeMode.DARK
+    page.theme = ft.Theme(font_family=FONT_FAMILY)
     page.bgcolor = THEME["bg_primary"]
     page.padding = 0
-    page.scroll = ft.ScrollMode.AUTO
+    page.scroll = ft.ScrollMode.HIDDEN
     page.window.width = APP_MAX_WIDTH
     page.window.height = 900
     page.window.min_width = APP_MAX_WIDTH
@@ -37,9 +49,13 @@ def run_app(page: ft.Page) -> None:
     current_mode = FetchMode.STREAM
     is_fetching = False
     stop_scheduler = threading.Event()
+    active_nav = "hot"
+    scroll_ref = ft.Ref[ft.Column]()
+    bottom_nav_host = ft.Container()
+    back_top_host: ft.Container
 
-    mode_hint = ft.Text("", color=THEME["text_muted"], size=12)
-    refresh_hint = ft.Text("", color=THEME["text_muted"], size=12)
+    mode_hint = ft.Text("", color=THEME["text_secondary"], size=12)
+    refresh_hint = ft.Text("", color=THEME["text_muted"], size=11)
     mode_tabs_host = ft.Container()
 
     keyword_field = ft.TextField(
@@ -50,19 +66,20 @@ def run_app(page: ft.Page) -> None:
         focused_border_color=THEME["primary"],
         bgcolor=THEME["bg_card"],
         color=THEME["text_primary"],
-        text_size=16,
-        border_radius=12,
-        content_padding=ft.padding.symmetric(horizontal=16, vertical=14),
+        text_size=15,
+        border_radius=10,
+        content_padding=ft.padding.symmetric(horizontal=12, vertical=10),
         expand=True,
         visible=False,
         disabled=True,
     )
 
     hourly_refresh_switch = ft.Switch(
-        label="整点自动刷新（每小时）",
+        label="整点自动刷新",
         value=True,
         active_color=THEME["primary"],
         label_style=ft.TextStyle(color=THEME["text_secondary"], size=13),
+        scale=0.9,
     )
 
     status_message = ft.Text("就绪", size=13, color=THEME["text_secondary"], expand=True)
@@ -72,24 +89,13 @@ def run_app(page: ft.Page) -> None:
     results_count_text = ft.Text("0 条结果", size=12, color=THEME["text_muted"])
     results_header = ft.Row(
         [
-            ft.Row(
-                [
-                    ft.Icon(ft.Icons.ARTICLE, size=22, color=THEME["primary_light"]),
-                    ft.Text("热点列表", size=18, weight=ft.FontWeight.BOLD, color=THEME["text_primary"]),
-                ],
-                spacing=8,
-            ),
-            ft.Container(
-                content=results_count_text,
-                padding=ft.padding.symmetric(horizontal=10, vertical=4),
-                bgcolor=THEME["bg_card"],
-                border_radius=20,
-            ),
+            ft.Text("热点列表", size=17, weight=ft.FontWeight.W_600, color=THEME["text_primary"]),
+            results_count_text,
         ],
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
     )
-    results_column = ft.Column(spacing=12)
-    analysis_wrap = ft.Row(wrap=True, spacing=10, run_spacing=10)
+    results_column = ft.Column(spacing=SPACE_SM)
+    analysis_wrap = ft.Row(wrap=True, spacing=SPACE_SM, run_spacing=SPACE_SM)
 
     sort_dropdown = ft.Dropdown(
         label="排序方式",
@@ -109,8 +115,9 @@ def run_app(page: ft.Page) -> None:
         focused_border_color=THEME["primary"],
         bgcolor=THEME["bg_card"],
         color=THEME["text_primary"],
-        border_radius=12,
-        content_padding=ft.padding.symmetric(horizontal=16, vertical=12),
+        border_radius=10,
+        content_padding=ft.padding.symmetric(horizontal=12, vertical=10),
+        text_size=14,
         expand=True,
     )
 
@@ -126,46 +133,24 @@ def run_app(page: ft.Page) -> None:
         expand=True,
     )
 
-    fetch_btn_content = ft.Row(
-        [
-            ft.Icon(ft.Icons.REFRESH, size=20, color="#ffffff"),
-            ft.Text("立即刷新", size=15, weight=ft.FontWeight.W_600, color="#ffffff"),
-        ],
-        alignment=ft.MainAxisAlignment.CENTER,
-        spacing=8,
-    )
     fetch_btn = ft.Container(
-        content=fetch_btn_content,
-        gradient=ft.LinearGradient(
-            begin=ft.alignment.center_left,
-            end=ft.alignment.center_right,
-            colors=[THEME["primary"], THEME["primary_dark"]],
-        ),
-        border_radius=14,
-        padding=ft.padding.symmetric(vertical=16, horizontal=20),
+        content=ft.Text("立即刷新", size=15, weight=ft.FontWeight.W_600, color="#ffffff"),
+        alignment=ft.alignment.center,
         expand=True,
         ink=True,
+        **ios_filled_button_style(),
     )
 
     history_btn = ft.Container(
-        content=ft.Row(
-            [
-                ft.Icon(ft.Icons.HISTORY, size=20, color=THEME["text_primary"]),
-                ft.Text("历史", size=15, weight=ft.FontWeight.W_600, color=THEME["text_primary"]),
-            ],
-            alignment=ft.MainAxisAlignment.CENTER,
-            spacing=8,
-        ),
-        bgcolor=THEME["bg_card"],
-        border=ft.border.all(2, BORDER),
-        border_radius=14,
-        padding=ft.padding.symmetric(vertical=16, horizontal=20),
+        content=ft.Text("历史", size=15, weight=ft.FontWeight.W_500, color=THEME["text_primary"]),
+        alignment=ft.alignment.center,
         expand=True,
         ink=True,
+        **ios_secondary_button_style(),
     )
 
     platform_chips: dict[str, ft.Container] = {}
-    platform_grid_rows = ft.Column(spacing=10)
+    platform_grid_rows = ft.Column(spacing=SPACE_SM)
 
     def rebuild_mode_tabs() -> None:
         mode_tabs_host.content = ui.build_mode_tabs(
@@ -279,8 +264,7 @@ def run_app(page: ft.Page) -> None:
                 ui.build_empty_state("无匹配结果", "调整筛选条件或清空标题筛选")
             )
         else:
-            for article in viewed:
-                results_column.controls.append(ui.build_article_card(article, open_url))
+            results_column.controls.append(ui.build_articles_group(viewed, open_url))
         total = len(raw_articles)
         shown = len(viewed)
         if shown == total:
@@ -384,7 +368,7 @@ def run_app(page: ft.Page) -> None:
     def do_fetch(_: ft.ControlEvent) -> None:
         trigger_fetch(reason="手动")
 
-    def do_history(_: ft.ControlEvent) -> None:
+    def load_history() -> None:
         nonlocal current_keyword
         user_kw = (keyword_field.value or DEFAULT_KEYWORD).strip()
         current_keyword = user_kw
@@ -395,6 +379,9 @@ def run_app(page: ft.Page) -> None:
         set_raw_articles(articles)
         refresh_analysis_for_current_mode()
         set_loading(False, f"已加载 {MODE_LABELS[current_mode]} 历史 {len(articles)} 条")
+
+    def do_history(_: ft.ControlEvent) -> None:
+        load_history()
 
     def hourly_scheduler_loop() -> None:
         while not stop_scheduler.is_set():
@@ -407,6 +394,46 @@ def run_app(page: ft.Page) -> None:
     def startup_refresh() -> None:
         time.sleep(0.8)
         trigger_fetch(reason="启动")
+
+    def scroll_to_section(key: str | None = None, *, offset: float | None = None) -> None:
+        col = scroll_ref.current
+        if col is None:
+            return
+        if key:
+            col.scroll_to(key=key, duration=350, curve=ft.AnimationCurve.EASE_OUT)
+        elif offset is not None:
+            col.scroll_to(offset=offset, duration=350, curve=ft.AnimationCurve.EASE_OUT)
+
+    def set_active_nav(nav_id: str) -> None:
+        nonlocal active_nav
+        active_nav = nav_id
+        bottom_nav_host.content = ui.build_bottom_nav(active_nav, on_nav_select)
+
+    def scroll_to_top(_: ft.ControlEvent) -> None:
+        scroll_to_section(offset=0)
+        set_active_nav("hot")
+        page.update()
+
+    back_top_host = ui.build_back_to_top(visible=False, on_click=scroll_to_top)
+
+    def on_scroll(e: ft.OnScrollEvent) -> None:
+        show = e.pixels > 200
+        if back_top_host.visible != show:
+            back_top_host.visible = show
+            page.update()
+
+    def on_nav_select(nav_id: str) -> None:
+        set_active_nav(nav_id)
+        if nav_id == "hot":
+            scroll_to_section("section-hot")
+        elif nav_id == "history":
+            load_history()
+            scroll_to_section("section-hot")
+        elif nav_id == "analysis":
+            scroll_to_section("section-analysis")
+        elif nav_id == "settings":
+            scroll_to_section("section-settings")
+        page.update()
 
     fetch_btn.on_click = do_fetch
     history_btn.on_click = do_history
@@ -436,31 +463,30 @@ def run_app(page: ft.Page) -> None:
                 platform_grid_rows,
                 hourly_refresh_switch,
                 refresh_hint,
-                ft.Row([fetch_btn, history_btn], spacing=12),
+                ft.Row([fetch_btn, history_btn], spacing=SPACE_SM),
                 ui.section_label("列表排序与筛选", "list"),
                 sort_dropdown,
-                ft.Row([list_filter_field], spacing=10),
+                ft.Row([list_filter_field], spacing=SPACE_SM),
                 platform_filter,
             ],
-            spacing=14,
+            spacing=SPACE_MD,
         )
     )
 
     status_bar = ft.Container(
-        content=ft.Row([status_dot, status_message, status_count], spacing=12),
-        padding=ft.padding.symmetric(horizontal=16, vertical=14),
-        bgcolor=THEME["bg_secondary"],
-        border_radius=12,
-        border=ft.border.all(1, BORDER),
-        margin=ft.margin.symmetric(horizontal=20),
+        content=ft.Row([status_dot, status_message, status_count], spacing=SPACE_SM),
+        padding=ft.padding.symmetric(horizontal=12, vertical=10),
+        margin=ft.margin.symmetric(horizontal=PAGE_PAD_H),
+        **grouped_surface(),
     )
 
-    main_column = ft.Column(
+    scroll_column = ft.Column(
         [
             ui.build_header(),
             ft.Container(
                 content=controls_section,
-                padding=ft.padding.symmetric(horizontal=20),
+                padding=ft.padding.symmetric(horizontal=PAGE_PAD_H),
+                key="section-settings",
             ),
             status_bar,
             ft.Container(
@@ -468,28 +494,58 @@ def run_app(page: ft.Page) -> None:
                     [
                         results_header,
                         results_column,
+                    ],
+                    spacing=SPACE_MD,
+                ),
+                padding=ft.padding.symmetric(horizontal=PAGE_PAD_H, vertical=6),
+                key="section-hot",
+            ),
+            ft.Container(
+                content=ft.Column(
+                    [
                         ui.section_header("热点分析", "chart", ""),
                         ft.Container(
                             content=analysis_wrap,
-                            padding=16,
-                            bgcolor=THEME["bg_secondary"],
-                            border_radius=16,
-                            border=ft.border.all(1, BORDER),
+                            padding=SPACE_MD,
+                            **grouped_surface(),
                         ),
-                        ft.Container(height=24),
                     ],
-                    spacing=16,
+                    spacing=SPACE_MD,
                 ),
-                padding=ft.padding.symmetric(horizontal=20, vertical=8),
+                padding=ft.padding.symmetric(horizontal=PAGE_PAD_H, vertical=6),
+                key="section-analysis",
             ),
+            ft.Container(height=56),
         ],
         spacing=0,
         scroll=ft.ScrollMode.AUTO,
+        expand=True,
+        ref=scroll_ref,
+        on_scroll=on_scroll,
+        on_scroll_interval=50,
+    )
+
+    bottom_nav_host.content = ui.build_bottom_nav(active_nav, on_nav_select)
+
+    shell_body = ft.Stack(
+        [
+            ft.Column(
+                [scroll_column, bottom_nav_host],
+                spacing=0,
+                expand=True,
+            ),
+            ft.Container(
+                content=back_top_host,
+                right=16,
+                bottom=72,
+            ),
+        ],
+        expand=True,
     )
 
     page.add(
         ft.Row(
-            [ui.phone_shell(main_column)],
+            [ui.phone_shell(shell_body)],
             alignment=ft.MainAxisAlignment.CENTER,
             expand=True,
         )
