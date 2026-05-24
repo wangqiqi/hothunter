@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-05-24
+
+### Added
+
+- 启动时自动刷新（打开 App 后约 0.8s）
+- 整点每小时自动刷新，Switch 可开关
+- 状态栏显示刷新来源（启动/手动/整点）及下次整点时间
+- `src/utils/refresh_scheduler.py` 整点调度工具
+
+### Changed
+
+- 「开始抓取」改为「立即刷新」
+- 刷新进行中时跳过重复触发
+
 ## [0.4.0] - 2026-05-24
 
 ### Added

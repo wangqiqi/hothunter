@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import threading
+import time
 
 import flet as ft
 
@@ -13,6 +14,7 @@ from src.models import Article
 from src.modes import FetchMode, MODE_LABELS, analysis_keyword, storage_key
 from src.storage.db import ArticleStore
 from src.storage.export import export_articles_csv
+from src.utils.refresh_scheduler import format_next_hour, seconds_until_next_hour
 
 
 def run_app(page: ft.Page) -> None:
@@ -29,8 +31,11 @@ def run_app(page: ft.Page) -> None:
     current_articles: list[Article] = []
     current_keyword = DEFAULT_KEYWORD
     current_mode = FetchMode.STREAM
+    is_fetching = False
+    stop_scheduler = threading.Event()
 
     mode_hint = ft.Text("", color=THEME["text_muted"], size=12)
+    refresh_hint = ft.Text("", color=THEME["text_muted"], size=12)
 
     keyword_field = ft.TextField(
         value=DEFAULT_KEYWORD,
@@ -56,6 +61,13 @@ def run_app(page: ft.Page) -> None:
         ),
     )
 
+    hourly_refresh_switch = ft.Switch(
+        label="整点自动刷新（每小时）",
+        value=True,
+        active_color=THEME["primary"],
+        label_style=ft.TextStyle(color=THEME["text_secondary"], size=13),
+    )
+
     status_text = ft.Text("就绪 · 实时流模式", color=THEME["text_secondary"], size=13)
     result_count = ft.Text("0 条结果", color=THEME["text_muted"], size=12)
     results_column = ft.Column(spacing=10)
@@ -69,8 +81,8 @@ def run_app(page: ft.Page) -> None:
     )
 
     fetch_btn = ft.ElevatedButton(
-        "开始抓取",
-        icon=ft.Icons.SEARCH,
+        "立即刷新",
+        icon=ft.Icons.REFRESH,
         bgcolor=THEME["primary"],
         color="#ffffff",
         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12)),
@@ -99,6 +111,12 @@ def run_app(page: ft.Page) -> None:
 
     platform_chips: dict[str, ft.Container] = {}
 
+    def update_refresh_hint() -> None:
+        if hourly_refresh_switch.value:
+            refresh_hint.value = f"打开时自动刷新 · 下次整点 {format_next_hour()}"
+        else:
+            refresh_hint.value = "打开时自动刷新 · 整点刷新已关闭"
+
     def apply_mode_ui() -> None:
         nonlocal current_mode
         current_mode = FetchMode(mode_group.value or FetchMode.STREAM)
@@ -114,17 +132,19 @@ def run_app(page: ft.Page) -> None:
 
         for pid, chip in platform_chips.items():
             search_only = pid in SEARCH_ONLY_PLATFORMS
-            if search_only and not is_custom:
-                chip.opacity = 0.45
-            else:
-                chip.opacity = 1.0
+            chip.opacity = 0.45 if search_only and not is_custom else 1.0
 
     def on_mode_change(_: ft.ControlEvent) -> None:
         apply_mode_ui()
         refresh_analysis_for_current_mode()
         page.update()
 
+    def on_hourly_toggle(_: ft.ControlEvent) -> None:
+        update_refresh_hint()
+        page.update()
+
     mode_group.on_change = on_mode_change
+    hourly_refresh_switch.on_change = on_hourly_toggle
 
     def platform_chip(platform: dict[str, str]) -> ft.Container:
         pid = platform["id"]
@@ -233,9 +253,7 @@ def run_app(page: ft.Page) -> None:
             )
         else:
             title = "热词分析（全站）" if current_mode == FetchMode.STREAM else f"热词分析（排除「{analyze_kw}」）"
-            analysis_column.controls.append(
-                ft.Text(title, size=12, color=THEME["text_muted"])
-            )
+            analysis_column.controls.append(ft.Text(title, size=12, color=THEME["text_muted"]))
             for word, count in words:
                 analysis_column.controls.append(
                     ft.Row(
@@ -294,46 +312,67 @@ def run_app(page: ft.Page) -> None:
         errors: dict[str, str],
         counts: dict[str, int],
         db_key: str,
+        *,
+        reason: str,
     ) -> None:
+        nonlocal is_fetching
+        is_fetching = False
         if articles:
             store.save_articles(articles, db_key)
         show_articles(articles)
         refresh_analysis_for_current_mode()
+        update_refresh_hint()
         parts = [format_counts(counts), f"共 {len(articles)} 条"]
         if errors:
             parts.append("提示: " + "; ".join(f"{k}" for k in errors))
-        set_loading(False, f"{MODE_LABELS[current_mode]} — " + "，".join(parts))
+        set_loading(False, f"{reason} · {MODE_LABELS[current_mode]} — " + "，".join(parts))
 
-    def do_fetch(_: ft.ControlEvent) -> None:
-        nonlocal current_keyword
+    def trigger_fetch(*, reason: str = "手动") -> bool:
+        nonlocal is_fetching, current_keyword
+
+        if is_fetching:
+            return False
+
         user_kw = (keyword_field.value or DEFAULT_KEYWORD).strip()
         current_keyword = user_kw
         db_key = storage_key(current_mode, user_kw)
 
         if current_mode == FetchMode.CUSTOM and not user_kw:
-            status_text.value = "定制模式请输入关键词"
-            page.update()
-            return
+            if reason != "启动":
+                status_text.value = "定制模式请输入关键词"
+                page.update()
+            return False
 
         selected = [pid for pid, on in platform_states.items() if on]
         if not selected:
-            status_text.value = "请至少选择一个平台"
-            page.update()
-            return
+            if reason != "启动":
+                status_text.value = "请至少选择一个平台"
+                page.update()
+            return False
 
+        is_fetching = True
         label = f"「{user_kw}」" if current_mode == FetchMode.CUSTOM else "全站热榜"
-        set_loading(True, f"正在抓取 {label}...")
+        set_loading(True, f"{reason}刷新中 · {label}...")
 
         def worker() -> None:
-            articles, errors, counts = fetch_all(
-                selected,
-                user_kw,
-                mode=current_mode,
-                sort_by_hot=bool(sort_by_hot_switch.value),
-            )
-            on_fetch_complete(articles, errors, counts, db_key)
+            nonlocal is_fetching
+            try:
+                articles, errors, counts = fetch_all(
+                    selected,
+                    user_kw,
+                    mode=current_mode,
+                    sort_by_hot=bool(sort_by_hot_switch.value),
+                )
+                on_fetch_complete(articles, errors, counts, db_key, reason=reason)
+            except Exception as exc:  # noqa: BLE001
+                is_fetching = False
+                set_loading(False, f"{reason}刷新失败: {exc}")
 
         threading.Thread(target=worker, daemon=True).start()
+        return True
+
+    def do_fetch(_: ft.ControlEvent) -> None:
+        trigger_fetch(reason="手动")
 
     def do_history(_: ft.ControlEvent) -> None:
         nonlocal current_keyword
@@ -363,15 +402,32 @@ def run_app(page: ft.Page) -> None:
         page.snack_bar.open = True
         page.update()
 
+    def hourly_scheduler_loop() -> None:
+        while not stop_scheduler.is_set():
+            wait_sec = seconds_until_next_hour()
+            if stop_scheduler.wait(wait_sec):
+                break
+            if hourly_refresh_switch.value:
+                trigger_fetch(reason="整点")
+
+    def startup_refresh() -> None:
+        time.sleep(0.8)
+        trigger_fetch(reason="启动")
+
     fetch_btn.on_click = do_fetch
     history_btn.on_click = do_history
     export_btn.on_click = do_export
+
+    def on_page_close(_: ft.ControlEvent) -> None:
+        stop_scheduler.set()
+
+    page.on_close = on_page_close
 
     header = ft.Container(
         content=ft.Column(
             [
                 ft.Text("热点猎手", size=26, weight=ft.FontWeight.BOLD, color="#ffffff"),
-                ft.Text("实时流 · 定制追踪", size=13, color="#ffffffcc"),
+                ft.Text("实时流 · 定制追踪 · 自动刷新", size=13, color="#ffffffcc"),
             ],
             spacing=4,
         ),
@@ -398,6 +454,8 @@ def run_app(page: ft.Page) -> None:
                     ft.Text("选择平台", size=14, weight=ft.FontWeight.W_600, color=THEME["text_primary"]),
                     platform_grid,
                     sort_by_hot_switch,
+                    hourly_refresh_switch,
+                    refresh_hint,
                     ft.Row([fetch_btn, history_btn], spacing=10),
                     ft.Row([export_btn], spacing=10),
                     status_text,
@@ -420,5 +478,9 @@ def run_app(page: ft.Page) -> None:
     )
 
     apply_mode_ui()
+    update_refresh_hint()
     export_btn.disabled = True
     refresh_analysis_for_current_mode()
+
+    threading.Thread(target=startup_refresh, daemon=True).start()
+    threading.Thread(target=hourly_scheduler_loop, daemon=True).start()
