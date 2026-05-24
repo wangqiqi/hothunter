@@ -1,6 +1,6 @@
 [project]
 name = "hothunter"
-version = "0.9.0"
+version = "0.10.0"
 description = "纯本地移动端热点抓取与分析工具"
 readme = "README.md"
 requires-python = ">=3.10"

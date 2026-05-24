@@ -21,10 +21,13 @@ def test_custom_mode_uses_keyword():
     assert storage_key(FetchMode.CUSTOM, "新能源") == "新能源"
 
 
-def test_stream_mode_skips_baidu():
-    usable, skipped = filter_platforms(FetchMode.STREAM, ["zhihu", "baidu", "weibo"])
+def test_stream_mode_skips_search_only():
+    only = frozenset({"baidu", "xiaohongshu"})
+    usable, skipped = filter_platforms(
+        FetchMode.STREAM, ["zhihu", "baidu", "weibo", "xiaohongshu"], only
+    )
     assert usable == ["zhihu", "weibo"]
-    assert skipped == ["baidu"]
+    assert skipped == ["baidu", "xiaohongshu"]
 
 
 def test_custom_mode_keeps_all_platforms():

@@ -8,12 +8,13 @@ import time
 import flet as ft
 
 from src.analysis.word_freq import analyze_titles
-from src.config import DEFAULT_KEYWORD, PLATFORMS, SEARCH_ONLY_PLATFORMS
+from src.config import DEFAULT_KEYWORD, get_platforms, get_search_only_platforms
 from src.crawler.registry import fetch_all
 from src.models import Article
 from src.modes import FetchMode, MODE_LABELS, analysis_keyword, storage_key
 from src.storage.db import ArticleStore
 from src.ui import components as ui
+from src.ui import nav_chrome as chrome
 from src.ui.theme import (
     APP_MAX_WIDTH,
     FONT_FAMILY,
@@ -44,21 +45,24 @@ def run_app(page: ft.Page) -> None:
     page.bgcolor = palette()["bg_primary"]
     page.padding = 0
     page.scroll = ft.ScrollMode.HIDDEN
-    page.window.width = APP_MAX_WIDTH
-    page.window.height = 900
-    page.window.min_width = APP_MAX_WIDTH
-    page.window.max_width = APP_MAX_WIDTH
+    chrome.configure_page_window(page, max_width=APP_MAX_WIDTH)
 
     store = ArticleStore()
-    platform_states: dict[str, bool] = {p["id"]: True for p in PLATFORMS}
+    platforms = get_platforms()
+    platform_states: dict[str, bool] = {p["id"]: True for p in platforms}
+    search_only = get_search_only_platforms()
     raw_articles: list[Article] = []
     current_keyword = DEFAULT_KEYWORD
     current_mode = FetchMode.STREAM
     is_fetching = False
     stop_scheduler = threading.Event()
     active_nav = "hot"
+    nav_visible = True
     scroll_ref = ft.Ref[ft.Column]()
     bottom_nav_host = ft.Container()
+    scroll_bottom_spacer = ft.Container(height=chrome.scroll_content_inset(nav_visible=True))
+    bottom_nav_wrapper = ft.Container()
+    back_top_slot = ft.Container()
     back_top_host: ft.Container
     header_host = ft.Container()
     phone_wrap = ft.Container()
@@ -124,7 +128,7 @@ def run_app(page: ft.Page) -> None:
         label="平台筛选",
         value=ALL_PLATFORMS,
         options=[ft.dropdown.Option(ALL_PLATFORMS, "全部平台")]
-        + [ft.dropdown.Option(p["name"], p["name"]) for p in PLATFORMS],
+        + [ft.dropdown.Option(p["name"], p["name"]) for p in platforms],
         expand=True,
     )
 
@@ -178,8 +182,7 @@ def run_app(page: ft.Page) -> None:
             else "按关键词过滤热榜内容；百度新闻将直接搜索该词"
         )
         for pid, chip in platform_chips.items():
-            search_only = pid in SEARCH_ONLY_PLATFORMS
-            chip.opacity = 0.45 if search_only and not is_custom else 1.0
+            chip.opacity = 0.45 if pid in search_only and not is_custom else 1.0
 
     def on_hourly_toggle(_: ft.ControlEvent) -> None:
         update_refresh_hint()
@@ -189,10 +192,10 @@ def run_app(page: ft.Page) -> None:
 
     def rebuild_platform_grid() -> None:
         platform_grid_rows.controls.clear()
-        for i in range(0, len(PLATFORMS), 2):
-            row_chips = [platform_chips[PLATFORMS[i]["id"]]]
-            if i + 1 < len(PLATFORMS):
-                row_chips.append(platform_chips[PLATFORMS[i + 1]["id"]])
+        for i in range(0, len(platforms), 2):
+            row_chips = [platform_chips[platforms[i]["id"]]]
+            if i + 1 < len(platforms):
+                row_chips.append(platform_chips[platforms[i + 1]["id"]])
             platform_grid_rows.controls.append(ft.Row(row_chips, spacing=10))
 
     def platform_chip(platform: dict[str, str]) -> ft.Container:
@@ -200,8 +203,8 @@ def run_app(page: ft.Page) -> None:
         selected = platform_states[pid]
 
         def toggle(_: ft.ControlEvent) -> None:
-            if pid in SEARCH_ONLY_PLATFORMS and current_mode == FetchMode.STREAM:
-                page.snack_bar = ft.SnackBar(ft.Text("百度新闻仅支持「定制热点」模式"))
+            if pid in search_only and current_mode == FetchMode.STREAM:
+                page.snack_bar = ft.SnackBar(ft.Text("该平台仅支持「定制热点」模式"))
                 page.snack_bar.open = True
                 page.update()
                 return
@@ -214,7 +217,7 @@ def run_app(page: ft.Page) -> None:
         chip = ui.build_platform_chip(
             platform,
             selected=platform_states[pid],
-            dimmed=pid in SEARCH_ONLY_PLATFORMS and current_mode == FetchMode.STREAM,
+            dimmed=pid in search_only and current_mode == FetchMode.STREAM,
             on_toggle=toggle,
         )
         platform_chips[pid] = chip
@@ -442,7 +445,7 @@ def run_app(page: ft.Page) -> None:
 
         header_host.content = ui.build_header(on_appearance_toggle)
         rebuild_mode_tabs()
-        for plat in PLATFORMS:
+        for plat in platforms:
             platform_chips[plat["id"]] = platform_chip(plat)
         rebuild_platform_grid()
         apply_grouped_style(controls_card)
@@ -456,15 +459,50 @@ def run_app(page: ft.Page) -> None:
         refresh_analysis_for_current_mode()
 
     back_top_host = ui.build_back_to_top(visible=False, on_click=scroll_to_top)
+    nav_anim = ft.Animation(chrome.NAV_ANIMATION_MS, ft.AnimationCurve.EASE_OUT)
+
+    def set_nav_visible(visible: bool) -> None:
+        nonlocal nav_visible
+        if visible == nav_visible:
+            return
+        nav_visible = visible
+        bottom_nav_wrapper.offset = chrome.nav_slide_offset(visible=visible)
+        bottom_nav_wrapper.opacity = chrome.nav_opacity(visible=visible)
+        scroll_bottom_spacer.height = chrome.scroll_content_inset(nav_visible=visible)
+        back_top_slot.bottom = chrome.back_top_bottom(nav_visible=visible)
+        page.update()
+
+    def reveal_nav(_: ft.ControlEvent | None = None) -> None:
+        set_nav_visible(True)
+
+    def on_bottom_hover(e: ft.HoverEvent) -> None:
+        if e.data == "true":
+            reveal_nav()
+
+    def on_bottom_drag_update(e: ft.DragUpdateEvent) -> None:
+        if e.delta_y < -3:
+            reveal_nav()
 
     def on_scroll(e: ft.OnScrollEvent) -> None:
-        show = e.pixels > 200
-        if back_top_host.visible != show:
-            back_top_host.visible = show
+        show_btt = e.pixels > 200
+        if back_top_host.visible != show_btt:
+            back_top_host.visible = show_btt
+
+        new_nav = chrome.decide_nav_visible_on_scroll(
+            pixels=e.pixels,
+            max_scroll_extent=e.max_scroll_extent or 0,
+            scroll_delta=e.scroll_delta,
+            direction=e.direction,
+            current=nav_visible,
+        )
+        if new_nav != nav_visible:
+            set_nav_visible(new_nav)
+        elif back_top_host.visible != show_btt:
             page.update()
 
     def on_nav_select(nav_id: str) -> None:
         set_active_nav(nav_id)
+        reveal_nav()
         if nav_id == "hot":
             scroll_to_section("section-hot")
         elif nav_id == "history":
@@ -487,7 +525,7 @@ def run_app(page: ft.Page) -> None:
 
     page.on_close = on_page_close
 
-    for p in PLATFORMS:
+    for p in platforms:
         platform_chip(p)
     rebuild_platform_grid()
     rebuild_mode_tabs()
@@ -548,7 +586,7 @@ def run_app(page: ft.Page) -> None:
                 padding=ft.padding.symmetric(horizontal=PAGE_PAD_H, vertical=6),
                 key="section-analysis",
             ),
-            ft.Container(height=56),
+            scroll_bottom_spacer,
         ],
         spacing=0,
         scroll=ft.ScrollMode.AUTO,
@@ -560,18 +598,47 @@ def run_app(page: ft.Page) -> None:
 
     bottom_nav_host.content = ui.build_bottom_nav(active_nav, on_nav_select)
 
+    bottom_nav_wrapper.content = ft.SafeArea(
+        content=bottom_nav_host,
+        top=False,
+        left=False,
+        right=False,
+        bottom=True,
+        minimum_padding=ft.padding.only(bottom=chrome.NAV_SAFE_BOTTOM_MIN),
+    )
+    bottom_nav_wrapper.left = 0
+    bottom_nav_wrapper.right = 0
+    bottom_nav_wrapper.bottom = 0
+    bottom_nav_wrapper.animate_offset = nav_anim
+    bottom_nav_wrapper.animate_opacity = nav_anim
+    bottom_nav_wrapper.offset = chrome.nav_slide_offset(visible=True)
+    bottom_nav_wrapper.opacity = 1.0
+
+    bottom_edge_zone = ft.GestureDetector(
+        content=ft.Container(
+            height=chrome.NAV_EDGE_ZONE_HEIGHT,
+            bgcolor=ft.Colors.TRANSPARENT,
+            on_hover=on_bottom_hover,
+        ),
+        on_vertical_drag_update=on_bottom_drag_update,
+        mouse_cursor=ft.MouseCursor.BASIC,
+    )
+
+    back_top_slot.content = back_top_host
+    back_top_slot.right = 16
+    back_top_slot.bottom = chrome.back_top_bottom(nav_visible=True)
+
     shell_body = ft.Stack(
         [
-            ft.Column(
-                [scroll_column, bottom_nav_host],
-                spacing=0,
-                expand=True,
-            ),
+            scroll_column,
             ft.Container(
-                content=back_top_host,
-                right=16,
-                bottom=72,
+                content=bottom_edge_zone,
+                left=0,
+                right=0,
+                bottom=0,
             ),
+            bottom_nav_wrapper,
+            back_top_slot,
         ],
         expand=True,
     )

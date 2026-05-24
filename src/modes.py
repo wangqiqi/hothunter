@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from src.config import DEFAULT_KEYWORD, SEARCH_ONLY_PLATFORMS
+from src.config import DEFAULT_KEYWORD, get_search_only_platforms
 
 
 class FetchMode(StrEnum):
@@ -44,18 +44,23 @@ def analysis_keyword(mode: FetchMode, user_keyword: str) -> str:
     return user_keyword.strip() or DEFAULT_KEYWORD
 
 
-def filter_platforms(mode: FetchMode, platform_ids: list[str]) -> tuple[list[str], list[str]]:
+def filter_platforms(
+    mode: FetchMode,
+    platform_ids: list[str],
+    search_only: frozenset[str] | None = None,
+) -> tuple[list[str], list[str]]:
     """
-    返回 (可用平台, 被跳过的平台名)。
-    百度新闻为搜索型，仅适用于定制模式。
+    返回 (可用平台 id, 被跳过的平台 id)。
+    搜索型平台（百度新闻、小红书等）仅适用于定制模式。
     """
     if mode == FetchMode.CUSTOM:
         return platform_ids, []
 
+    only = search_only if search_only is not None else get_search_only_platforms()
     skipped: list[str] = []
     usable: list[str] = []
     for pid in platform_ids:
-        if pid in SEARCH_ONLY_PLATFORMS:
+        if pid in only:
             skipped.append(pid)
         else:
             usable.append(pid)

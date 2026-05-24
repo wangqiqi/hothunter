@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import flet as ft
 
-from src.config import SEARCH_ONLY_PLATFORMS
+from src.config import get_search_only_platforms
 from src.models import Article
 from src.ui.theme import (
     PAGE_PAD_H,
@@ -138,7 +138,7 @@ def build_platform_chip(
   p = palette()
   pid = platform["id"]
   style = PLATFORM_STYLE.get(pid, PLATFORM_STYLE["zhihu"])
-  subtitle = "仅定制" if pid in SEARCH_ONLY_PLATFORMS else ("已选" if selected else "")
+  subtitle = "仅定制" if pid in get_search_only_platforms() else ("已选" if selected else "")
 
   checkbox = ft.Container(
       content=ft.Icon(ft.Icons.CHECK, size=12, color=p["on_primary"]) if selected else None,
@@ -175,7 +175,7 @@ def build_platform_chip(
                       ft.Text(
                           subtitle,
                           size=10,
-                          color=p["warning"] if pid in SEARCH_ONLY_PLATFORMS else p["text_muted"],
+                          color=p["warning"] if pid in get_search_only_platforms() else p["text_muted"],
                           visible=bool(subtitle),
                       ),
                   ],
@@ -205,7 +205,7 @@ def article_card_subtitle(article: Article) -> str:
   return ""
 
 
-def build_article_row(article: Article, on_open_url) -> ft.Container:
+def build_article_row(article: Article, on_open_article) -> ft.Container:
   p = palette()
   badge_bg, badge_fg = platform_badge_style(article.platform)
   short_name = platform_short(article.platform)
@@ -250,18 +250,18 @@ def build_article_row(article: Article, on_open_url) -> ft.Container:
           vertical_alignment=ft.CrossAxisAlignment.CENTER,
       ),
       padding=ft.padding.symmetric(horizontal=12, vertical=10),
-      on_click=lambda e, u=article.url: on_open_url(u),
+      on_click=lambda e, a=article: on_open_article(a),
       ink=True,
   )
 
 
-def build_articles_group(articles: list[Article], on_open_url) -> ft.Control:
+def build_articles_group(articles: list[Article], on_open_article) -> ft.Control:
   if not articles:
       return build_empty_state("暂无结果", "刷新或调整筛选条件")
   rows: list[ft.Control] = []
   sep = border_color()
   for i, article in enumerate(articles):
-      rows.append(build_article_row(article, on_open_url))
+      rows.append(build_article_row(article, on_open_article))
       if i < len(articles) - 1:
           rows.append(
               ft.Container(
@@ -276,8 +276,8 @@ def build_articles_group(articles: list[Article], on_open_url) -> ft.Control:
   )
 
 
-def build_article_card(article: Article, on_open_url) -> ft.Container:
-  return ft.Container(content=build_article_row(article, on_open_url), **grouped_surface())
+def build_article_card(article: Article, on_open_article) -> ft.Container:
+  return ft.Container(content=build_article_row(article, on_open_article), **grouped_surface())
 
 
 def build_word_tag(word: str, count: int, level: int) -> ft.Container:
@@ -368,6 +368,7 @@ _NAV_ICONS = {
 
 def build_bottom_nav(active: str, on_select) -> ft.Container:
   p = palette()
+  shadow_color = p.get("shadow", "#00000040")
 
   def item(nav_id: str, label: str, icon_key: str) -> ft.Container:
       selected = active == nav_id
@@ -399,6 +400,12 @@ def build_bottom_nav(active: str, on_select) -> ft.Container:
       bgcolor=p["bg_secondary"],
       border=ft.border.only(top=ft.BorderSide(0.5, border_color())),
       padding=ft.padding.only(left=8, right=8, top=4, bottom=8),
+      shadow=ft.BoxShadow(
+          spread_radius=0,
+          blur_radius=12,
+          color=shadow_color,
+          offset=ft.Offset(0, -2),
+      ),
   )
 
 
@@ -426,6 +433,7 @@ def phone_shell(content: ft.Control) -> ft.Container:
   return ft.Container(
       content=content,
       width=APP_MAX_WIDTH,
+      expand=True,
       bgcolor=p["bg_primary"],
       border=ft.border.only(
           left=ft.BorderSide(0.5, border_color()),

@@ -1,0 +1,28 @@
+{
+  "sources": [
+    {
+      "id": "demo_json",
+      "name": "示例 JSON 热榜",
+      "icon": "例",
+      "enabled": false,
+      "type": "json",
+      "url": "https://your-api.example.com/hot",
+      "method": "GET",
+      "referer": "",
+      "items_path": "data.list",
+      "title_field": "title",
+      "url_field": "url",
+      "hot_field": "score",
+      "stream": true
+    },
+    {
+      "id": "demo_rss",
+      "name": "示例 RSS",
+      "icon": "R",
+      "enabled": false,
+      "type": "rss",
+      "url": "https://your-site.example.com/feed.xml",
+      "stream": true
+    }
+  ]
+}

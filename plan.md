@@ -10,7 +10,7 @@
 1. [x] 添加 `pyproject.toml`（Flet 打包配置 + 网络权限）
 2. [x] 添加 `scripts/onekey_env.sh` + `onekey_start.sh`（环境 / 调试 / 打包）
 3. [x] 更新 README 部署说明（APK 为主，Flet App 为辅）
-4. [ ] 本地 `start` 调试 UI 验证（已加底部导航与返回顶部，待肉眼确认）
+4. [ ] 本地 `start` 调试 UI 验证（底栏隐现 + SafeArea + 返回顶部，待肉眼确认）
 5. [ ] `build-apk` 首次构建实测
 6. [ ] 手机 `install-apk` 实测
 7. [x] Flet UI 对齐 HTML 原型（首版）
@@ -18,9 +18,11 @@
 9. [x] onekey_start 端口占用修复（v0.7.0）
 10. [x] GitHub README + MIT LICENSE（v0.8.0）
 11. [x] 底部导航 + 返回顶部 + iOS 深色主题（v0.8.0）
+11b. [x] 底栏隐现（滚动/贴底/手势/悬停）+ SafeArea + 动态留白（Unreleased）
 12. [x] 浅色/深色双主题 + 分组列表样式（v0.9.0）
 13. [x] 应用图标 assets + 打包/窗口接入（v0.9.0）
-14. [ ] 爬虫集成测试（mock 网络）
+14. [x] 必接平台 12 源 + 自定义 sources.json（Unreleased）
+15. [ ] 爬虫集成测试（mock 网络，tests/test_crawlers_parse.py 已部分覆盖）
 
 ---
 

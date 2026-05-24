@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-05-24
+
+### Added
+
+- **必接平台扩展**：百度热搜、抖音、腾讯新闻、网易热点、贴吧热议（内置共 12 源，见 `docs/PLATFORMS.md`）
+- **自定义媒体源**：`~/.hothunter/sources.json` 支持 JSON API / RSS（`sources.example.json`、`docs/CUSTOM_SOURCES.md`）
+- 底部导航 **隐现交互**（下滑隐藏、上滑/回顶/近底/贴底热区唤出），桌面悬停底缘与移动端上滑手势
+- `src/ui/nav_chrome.py`：滚动判定、内容留白、窗口尺寸（真机占满高度）
+- `tests/test_crawlers_parse.py`、`tests/test_custom_sources.py`、`tests/test_nav_chrome.py`
+
+### Changed
+
+- 底栏改为 `Stack` 浮层 + `SafeArea`，列表底部留白随显隐动态调整
+- `phone_shell` 纵向 `expand`，桌面仍固定 430×900 手机框
+- 爬虫注册表合并内置源与用户自定义源（`src/crawler/registry.py`）
+
 ## [0.9.0] - 2026-05-24
 
 ### Added
