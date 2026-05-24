@@ -56,6 +56,25 @@ def section_header(title: str, icon: str, count_text: str = "") -> ft.Row:
   )
 
 
+def build_results_header_row(
+    title_control: ft.Control,
+    count_control: ft.Control,
+    toolbar: ft.Control,
+) -> ft.Column:
+  """热点列表标题区：首行标题+条数，次行排序/筛选（避免 expand 撑满整屏）。"""
+  return ft.Column(
+      [
+          ft.Row(
+              [title_control, count_control],
+              alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+          ),
+          toolbar,
+      ],
+      spacing=SPACE_SM,
+      tight=True,
+  )
+
+
 def build_header(on_appearance_toggle) -> ft.Container:
   """大标题 + 浅色/深色切换。"""
   p = palette()
@@ -96,36 +115,72 @@ def build_header(on_appearance_toggle) -> ft.Container:
   )
 
 
-def build_mode_tabs(current: str, on_stream, on_custom) -> ft.Container:
+def build_mode_tabs(current: str, on_stream, on_custom) -> ft.SegmentedButton:
+  """iOS 分段控件（Flet SegmentedButton，固定高度，不撑满父级 Column）。"""
   p = palette()
 
-  def tab(label: str, value: str, on_click) -> ft.Container:
-      selected = current == value
-      return ft.Container(
-          content=ft.Text(
-              label,
-              size=13,
-              weight=ft.FontWeight.W_600 if selected else ft.FontWeight.W_500,
-              color=p["text_primary"] if selected else p["text_secondary"],
-          ),
-          padding=ft.padding.symmetric(horizontal=10, vertical=7),
-          border_radius=RADIUS_SM,
-          bgcolor=p["bg_elevated"] if selected else "transparent",
-          on_click=on_click,
-          ink=not selected,
-          expand=True,
-          alignment=ft.alignment.center,
-      )
+  def on_change(e: ft.ControlEvent) -> None:
+      btn = e.control
+      if not btn.selected:
+          return
+      choice = next(iter(btn.selected))
+      if choice == "stream":
+          on_stream(e)
+      else:
+          on_custom(e)
 
-  return ft.Container(
-      content=ft.Row(
-          [tab("实时流", "stream", on_stream), tab("定制", "custom", on_custom)],
-          spacing=2,
+  return ft.SegmentedButton(
+      selected={current},
+      allow_empty_selection=False,
+      segments=[
+          ft.Segment(value="stream", label=ft.Text("实时流")),
+          ft.Segment(value="custom", label=ft.Text("定制")),
+      ],
+      on_change=on_change,
+      style=ft.ButtonStyle(
+          color={
+              ft.ControlState.SELECTED: p["on_primary"],
+              ft.ControlState.DEFAULT: p["text_secondary"],
+          },
+          bgcolor={
+              ft.ControlState.SELECTED: p["primary"],
+              ft.ControlState.DEFAULT: p["bg_card"],
+          },
+          padding=ft.padding.symmetric(horizontal=14, vertical=10),
+          shape=ft.RoundedRectangleBorder(radius=RADIUS_SM),
       ),
-      padding=2,
-      bgcolor=p["bg_card"],
-      border_radius=RADIUS_MD,
-      border=ft.border.all(0.5, border_color()),
+  )
+
+
+def build_collapsible_section_header(
+    title: str,
+    *,
+    icon: str | None = None,
+    summary: str = "",
+    expanded: bool,
+    on_toggle,
+) -> ft.Container:
+  """可折叠区块标题（如选择平台）。"""
+  p = palette()
+  chevron = ft.Icons.EXPAND_MORE if expanded else ft.Icons.CHEVRON_RIGHT
+  row_items: list[ft.Control] = []
+  if icon:
+      icons = {"grid": ft.Icons.GRID_VIEW, "search": ft.Icons.SEARCH}
+      if icon in icons:
+          row_items.append(ft.Icon(icons[icon], size=14, color=p["text_muted"]))
+  row_items.append(
+      ft.Text(title, size=13, weight=ft.FontWeight.W_600, color=p["text_muted"])
+  )
+  if summary:
+      row_items.append(
+          ft.Text(summary, size=12, color=p["text_secondary"], expand=True, text_align=ft.TextAlign.RIGHT)
+      )
+  row_items.append(ft.Icon(chevron, size=20, color=p["text_muted"]))
+  return ft.Container(
+      content=ft.Row(row_items, spacing=SPACE_XS, alignment=ft.MainAxisAlignment.START),
+      on_click=on_toggle,
+      ink=True,
+      padding=ft.padding.only(bottom=4),
   )
 
 

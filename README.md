@@ -64,6 +64,8 @@ chmod +x scripts/onekey_env.sh scripts/onekey_start.sh
 
 ### 3. 打包安装到手机（推荐国内分发）
 
+**前置**：系统需安装 [Flutter SDK](https://docs.flutter.dev/get-started/install/linux)（>= 3.24，与 Flet 0.25 配套），并加入 `PATH`。可用 `./scripts/onekey_env.sh check` 查看是否就绪。
+
 ```bash
 ./scripts/onekey_start.sh build-apk      # 产物 → dist/apk/
 ./scripts/onekey_start.sh install-apk    # 需 adb + USB 调试

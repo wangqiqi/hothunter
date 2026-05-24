@@ -193,9 +193,51 @@ check_packages() {
     return "$issues"
 }
 
+# 将常见位置的 Flutter 加入 PATH（供 build-apk 与 check 使用）
+ensure_flutter_in_path() {
+    if command -v flutter >/dev/null 2>&1; then
+        return 0
+    fi
+    local d
+    for d in \
+        "${FLUTTER_HOME:-}" \
+        "$HOME/flutter/stable" \
+        "$HOME/flutter" \
+        "$HOME/snap/flutter/common/flutter"; do
+        [[ -n "$d" && -x "$d/bin/flutter" ]] || continue
+        export PATH="$d/bin:$PATH"
+        command -v flutter >/dev/null 2>&1 && return 0
+    done
+    return 1
+}
+
+flutter_install_hint() {
+    cat <<'EOF'
+  Flutter SDK 是 Flet 打包 APK/AAB 的必需依赖（>= 3.24，与 Flet 0.25 配套）。
+
+  安装示例（Linux）:
+    git clone https://github.com/flutter/flutter.git -b stable --depth 1 ~/flutter/stable
+    echo 'export PATH="$HOME/flutter/stable/bin:$PATH"' >> ~/.bashrc
+    source ~/.bashrc
+    flutter doctor
+
+  接受 Android 许可（首次打包）:
+    flutter doctor --android-licenses
+
+  然后重新执行: ./scripts/onekey_start.sh build-apk
+EOF
+}
+
 check_optional_tools() {
     echo
     echo -e "${BOLD}[可选 · 打包/安装]${NC}"
+    ensure_flutter_in_path || true
+    if command -v flutter >/dev/null 2>&1; then
+        ok "  Flutter: $(flutter --version 2>/dev/null | head -1)"
+    else
+        warn "  Flutter: 未安装（build-apk 必需）"
+        flutter_install_hint | sed 's/^/    /'
+    fi
     if command -v java >/dev/null 2>&1; then
         ok "  Java: $(java -version 2>&1 | head -1)"
     else

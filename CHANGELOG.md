@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-05-24
+
+### Changed
+
+- 抓取模式切换改为 `SegmentedButton`（选中主色底 + 白字，对比更清晰）
+- 「选择平台」默认收起，标题行展示已选数量
+- 列表排序、标题筛选、平台筛选移至「热点列表」标题区
+- `onekey_env.sh` / `onekey_start.sh`：Flutter 路径探测与 `build-apk` 前置检查；README 补充 Flutter 说明
+
+### Fixed
+
+- 修复模式 Tab / 关键词框 `expand` 在 Column 内纵向撑满、界面只剩两块灰区域的问题
+
 ## [0.11.0] - 2026-05-24
 
 ### Added

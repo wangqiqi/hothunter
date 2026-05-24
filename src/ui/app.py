@@ -84,7 +84,6 @@ def run_app(page: ft.Page) -> None:
         text_size=15,
         border_radius=10,
         content_padding=ft.padding.symmetric(horizontal=12, vertical=10),
-        expand=True,
         visible=False,
         disabled=True,
     )
@@ -101,37 +100,49 @@ def run_app(page: ft.Page) -> None:
 
     results_count_text = ft.Text("0 条结果", size=12)
     results_title = ft.Text("热点列表", size=17, weight=ft.FontWeight.W_600)
-    results_header = ft.Row(
-        [results_title, results_count_text],
-        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-    )
     results_column = ft.Column(spacing=SPACE_SM)
     analysis_wrap = ft.Row(wrap=True, spacing=SPACE_SM, run_spacing=SPACE_SM)
 
     sort_dropdown = ft.Dropdown(
-        label="排序方式",
+        hint_text="排序",
         value=DEFAULT_SORT,
         options=[ft.dropdown.Option(key, label) for key, label in SORT_OPTIONS.items()],
-        expand=True,
+        width=112,
+        text_size=12,
+        content_padding=ft.padding.symmetric(horizontal=6, vertical=4),
+        dense=True,
     )
 
     list_filter_field = ft.TextField(
-        label="标题筛选",
-        hint_text="在当前结果中按标题关键词过滤",
+        hint_text="筛选标题",
         border_color="transparent",
         border_radius=10,
-        content_padding=ft.padding.symmetric(horizontal=12, vertical=10),
-        text_size=14,
-        expand=True,
+        content_padding=ft.padding.symmetric(horizontal=10, vertical=8),
+        text_size=13,
+        expand=2,
     )
 
     platform_filter = ft.Dropdown(
-        label="平台筛选",
+        hint_text="平台",
         value=ALL_PLATFORMS,
-        options=[ft.dropdown.Option(ALL_PLATFORMS, "全部平台")]
+        options=[ft.dropdown.Option(ALL_PLATFORMS, "全部")]
         + [ft.dropdown.Option(p["name"], p["name"]) for p in platforms],
-        expand=True,
+        width=76,
+        text_size=12,
+        content_padding=ft.padding.symmetric(horizontal=6, vertical=4),
+        dense=True,
     )
+
+    results_toolbar = ft.Row(
+        [sort_dropdown, list_filter_field, platform_filter],
+        spacing=SPACE_SM,
+        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+    )
+    results_header_host = ft.Container()
+
+    platform_section_expanded = False
+    platform_grid_wrap = ft.Container(visible=False)
+    platform_section_header_host = ft.Container()
 
     fetch_label = ft.Text("立即刷新", size=15, weight=ft.FontWeight.W_600)
     fetch_btn = ft.Container(
@@ -191,6 +202,26 @@ def run_app(page: ft.Page) -> None:
 
     hourly_refresh_switch.on_change = on_hourly_toggle
 
+    def platform_selection_summary() -> str:
+        n = sum(1 for on in platform_states.values() if on)
+        return f"已选 {n}/{len(platforms)}"
+
+    def rebuild_platform_section_header() -> None:
+        platform_section_header_host.content = ui.build_collapsible_section_header(
+            "选择平台",
+            icon="grid",
+            summary=platform_selection_summary(),
+            expanded=platform_section_expanded,
+            on_toggle=toggle_platform_section,
+        )
+
+    def toggle_platform_section(_: ft.ControlEvent) -> None:
+        nonlocal platform_section_expanded
+        platform_section_expanded = not platform_section_expanded
+        platform_grid_wrap.visible = platform_section_expanded
+        rebuild_platform_section_header()
+        page.update()
+
     def rebuild_platform_grid() -> None:
         platform_grid_rows.controls.clear()
         for i in range(0, len(platforms), 2):
@@ -198,6 +229,7 @@ def run_app(page: ft.Page) -> None:
             if i + 1 < len(platforms):
                 row_chips.append(platform_chips[platforms[i + 1]["id"]])
             platform_grid_rows.controls.append(ft.Row(row_chips, spacing=10))
+        rebuild_platform_section_header()
 
     def platform_chip(platform: dict[str, str]) -> ft.Container:
         pid = platform["id"]
@@ -213,6 +245,7 @@ def run_app(page: ft.Page) -> None:
             new_chip = platform_chip(platform)
             platform_chips[pid] = new_chip
             rebuild_platform_grid()
+            rebuild_platform_section_header()
             page.update()
 
         chip = ui.build_platform_chip(
@@ -451,6 +484,7 @@ def run_app(page: ft.Page) -> None:
         status_count.color = p["primary_light"]
         results_title.color = p["text_primary"]
         results_count_text.color = p["text_muted"]
+        rebuild_results_header()
         fetch_label.color = p["on_primary"]
         history_label.color = p["text_primary"]
         for key, value in ios_filled_button_style().items():
@@ -548,10 +582,19 @@ def run_app(page: ft.Page) -> None:
 
     page.on_close = on_page_close
 
+    def rebuild_results_header() -> None:
+        results_header_host.content = ui.build_results_header_row(
+            results_title,
+            results_count_text,
+            results_toolbar,
+        )
+
     for p in platforms:
         platform_chip(p)
     rebuild_platform_grid()
     rebuild_mode_tabs()
+    rebuild_results_header()
+    platform_grid_wrap.content = platform_grid_rows
 
     controls_card = ui.search_card(
         ft.Column(
@@ -561,17 +604,14 @@ def run_app(page: ft.Page) -> None:
                 mode_hint,
                 ui.section_label("搜索关键词", "search"),
                 keyword_field,
-                ui.section_label("选择平台", "grid"),
-                platform_grid_rows,
+                platform_section_header_host,
+                platform_grid_wrap,
                 hourly_refresh_switch,
                 refresh_hint,
                 ft.Row([fetch_btn, history_btn], spacing=SPACE_SM),
-                ui.section_label("列表排序与筛选", "list"),
-                sort_dropdown,
-                ft.Row([list_filter_field], spacing=SPACE_SM),
-                platform_filter,
             ],
             spacing=SPACE_MD,
+            tight=True,
         )
     )
 
@@ -595,8 +635,9 @@ def run_app(page: ft.Page) -> None:
             status_bar,
             ft.Container(
                 content=ft.Column(
-                    [results_header, results_column],
+                    [results_header_host, results_column],
                     spacing=SPACE_MD,
+                    tight=True,
                 ),
                 padding=ft.padding.symmetric(horizontal=PAGE_PAD_H, vertical=6),
                 key="section-hot",

@@ -317,6 +317,32 @@ flet_build_bin() {
     fi
 }
 
+require_flutter_for_build() {
+    # 与 onekey_env.sh 保持一致的探测路径
+    if command -v flutter >/dev/null 2>&1; then
+        return 0
+    fi
+    local d
+    for d in \
+        "${FLUTTER_HOME:-}" \
+        "$HOME/flutter/stable" \
+        "$HOME/flutter" \
+        "$HOME/snap/flutter/common/flutter"; do
+        [[ -n "$d" && -x "$d/bin/flutter" ]] || continue
+        export PATH="$d/bin:$PATH"
+        command -v flutter >/dev/null 2>&1 && return 0
+    done
+    err "未找到 Flutter SDK。Flet 0.25 打包 APK 需要 Flutter >= 3.24，且必须在 PATH 中。"
+    echo
+    echo "  安装示例:"
+    echo "    git clone https://github.com/flutter/flutter.git -b stable --depth 1 ~/flutter/stable"
+    echo "    export PATH=\"\$HOME/flutter/stable/bin:\$PATH\""
+    echo "    flutter doctor"
+    echo
+    echo "  环境检查: ./scripts/onekey_env.sh check"
+    exit 1
+}
+
 cmd_build_apk() {
     activate_venv_if_exists
     local py build_cmd
@@ -325,10 +351,13 @@ cmd_build_apk() {
         err "请先运行: ./scripts/onekey_env.sh install"
         exit 1
     fi
+    require_flutter_for_build
     mkdir -p "$DIST_APK_DIR"
     build_cmd="$(flet_build_bin)"
     info "打包 APK → $DIST_APK_DIR"
     warn "首次构建会下载 Android SDK / JDK，请耐心等待..."
+    # Flet 0.25：未找到 Flutter 时 cleanup 会 KeyError('loading')，跳过 doctor 以输出清晰错误
+    export FLET_CLI_SKIP_FLUTTER_DOCTOR="${FLET_CLI_SKIP_FLUTTER_DOCTOR:-1}"
     # shellcheck disable=SC2086
     $build_cmd apk "$ROOT_DIR" -v -o "$DIST_APK_DIR"
     ok "APK 构建完成:"
@@ -343,10 +372,12 @@ cmd_build_aab() {
         err "请先运行: ./scripts/onekey_env.sh install"
         exit 1
     fi
+    require_flutter_for_build
     mkdir -p "$DIST_AAB_DIR"
     build_cmd="$(flet_build_bin)"
     info "打包 AAB → $DIST_AAB_DIR"
     warn "首次构建会下载 Android SDK / JDK，请耐心等待..."
+    export FLET_CLI_SKIP_FLUTTER_DOCTOR="${FLET_CLI_SKIP_FLUTTER_DOCTOR:-1}"
     # shellcheck disable=SC2086
     $build_cmd aab "$ROOT_DIR" -v -o "$DIST_AAB_DIR"
     ok "AAB 构建完成:"
