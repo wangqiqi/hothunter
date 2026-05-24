@@ -20,6 +20,11 @@ PLATFORMS: list[PlatformMeta] = [
     {"id": "toutiao", "name": "今日头条", "icon": "条"},
 ]
 
+# 仅定制模式可用（搜索型，非原生热榜）
+SEARCH_ONLY_PLATFORMS: frozenset[str] = frozenset({"baidu"})
+
+PLATFORM_NAMES: dict[str, str] = {p["id"]: p["name"] for p in PLATFORMS}
+
 DEFAULT_KEYWORD = "AI"
 REQUEST_DELAY_SEC = 1.0
 HISTORY_LIMIT = 100

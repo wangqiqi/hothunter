@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-24
+
+### Added
+
+- **双抓取模式**：实时流热点 / 定制热点（`src/modes.py`）
+- UI 模式切换（RadioGroup）、模式说明、百度「仅定制」提示
+- 实时流历史与词频独立存储（`keyword=__stream__`）
+- 4 个模式相关单元测试
+
+### Changed
+
+- 默认进入「实时流热点」模式
+- `fetch_all` 支持 `mode` 参数，实时模式自动跳过百度搜索型平台
+
 ## [0.3.0] - 2026-05-24
 
 ### Added

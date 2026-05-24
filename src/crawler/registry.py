@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from src.config import PLATFORM_NAMES
 from src.crawler import baidu, bilibili, kr36, toutiao, weibo, zhihu
 from src.crawler.base import safe_fetch
 from src.models import Article
+from src.modes import FetchMode, crawl_keyword, filter_platforms
 from src.utils.hot_sort import sort_by_hot_value
 
 CrawlerFunc = Callable[[str], list[Article]]
@@ -32,14 +34,23 @@ def fetch_all(
     platform_ids: list[str],
     keyword: str,
     *,
+    mode: FetchMode = FetchMode.CUSTOM,
     sort_by_hot: bool = True,
 ) -> tuple[list[Article], dict[str, str], dict[str, int]]:
     results: list[Article] = []
     errors: dict[str, str] = {}
     counts: dict[str, int] = {}
 
-    for pid in platform_ids:
-        name, articles, err = fetch_platform(pid, keyword)
+    crawl_kw = crawl_keyword(mode, keyword)
+    usable, skipped = filter_platforms(mode, platform_ids)
+
+    for pid in skipped:
+        name = PLATFORM_NAMES.get(pid, pid)
+        errors[name] = "该平台仅支持「定制热点」模式"
+        counts[name] = 0
+
+    for pid in usable:
+        name, articles, err = fetch_platform(pid, crawl_kw)
         results.extend(articles)
         counts[name] = len(articles)
         if err:
