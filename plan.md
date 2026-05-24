@@ -1,25 +1,61 @@
 # 热点猎手 (Hotspot Hunter) 项目计划
 
 **日期**: 2026-05-24  
-**阶段**: Phase 5 — 定时刷新
+**阶段**: Phase 6 — APK 打包与一键脚本
 
 ---
 
-## Phase 5 任务
+## Phase 6 任务
 
-1. [x] 启动时自动刷新一次
-2. [x] 手动刷新（「立即刷新」按钮）
-3. [x] 整点每小时自动刷新（可开关）
-4. [x] 显示下次整点时间
-5. [x] 单元测试 + 文档 + v0.5.0
+1. [x] 添加 `pyproject.toml`（Flet 打包配置 + 网络权限）
+2. [x] 添加 `scripts/onekey_env.sh` + `onekey_start.sh`（环境 / 调试 / 打包）
+3. [x] 更新 README 部署说明（APK 为主，Flet App 为辅）
+4. [ ] 本地 `start` 调试 UI 验证（已重构，待肉眼确认）
+5. [ ] `build-apk` 首次构建实测
+6. [ ] 手机 `install-apk` 实测
+7. [x] Flet UI 对齐 HTML 原型（首版）
+8. [ ] 导出 JSON
+9. [ ] 爬虫集成测试（mock 网络）
 
 ---
 
-## Phase 6（待办）
+## 一键脚本命令
 
-- [ ] Flet 手机端实测与 UI 对齐 HTML 原型
-- [ ] 导出 JSON
-- [ ] 爬虫集成测试（mock 网络）
+### onekey_env.sh（环境）
+
+| 命令 | 说明 |
+|------|------|
+| `check` | 检查 Python / venv / 依赖（只读） |
+| `install` | 创建 `.venv` 并安装全部依赖 |
+| `sync` | 同步 requirements.txt |
+| `upgrade` / `reinstall` | 升级包 / 重建 venv |
+| `doctor` | 完整诊断 |
+
+```bash
+./scripts/onekey_env.sh check
+./scripts/onekey_env.sh install
+```
+
+### onekey_start.sh（运行 / 打包）
+
+| 命令 | 说明 |
+|------|------|
+| `env` | 同 `onekey_env.sh install` |
+| `start` | 本地 Flet 调试（热重载） |
+| `stop` / `restart` | 停止 / 重启 |
+| `status` | 进程、环境、构建产物 |
+| `build-apk` | 打包 APK → `dist/apk/` |
+| `build-aab` | 打包 AAB → `dist/aab/` |
+| `build-all` | APK + AAB |
+| `install-apk` | adb 安装到手机 |
+| `clean` | 清理缓存 |
+
+```bash
+./scripts/onekey_start.sh env
+./scripts/onekey_start.sh start      # 本地调试
+./scripts/onekey_start.sh build-apk    # 打包
+./scripts/onekey_start.sh install-apk  # 装到手机
+```
 
 ---
 

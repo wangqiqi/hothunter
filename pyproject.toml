@@ -1,0 +1,43 @@
+[project]
+name = "hothunter"
+version = "0.6.0"
+description = "纯本地移动端热点抓取与分析工具"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "flet==0.25.0",
+    "requests==2.32.3",
+    "beautifulsoup4==4.12.3",
+    "fake-useragent==1.5.1",
+    "lxml==5.2.2",
+]
+
+[tool.flet]
+org = "dev.hothunter"
+product = "热点猎手"
+company = "Hotspot Hunter"
+copyright = "Copyright (C) 2026 Hotspot Hunter"
+
+[tool.flet.app]
+module = "hotspot_app"
+exclude = [
+    "tests",
+    "docs",
+    "archive",
+    "scripts",
+    ".venv",
+    ".runtime",
+    "build",
+    "dist",
+    ".git",
+    ".pytest_cache",
+    "plan.md",
+    "CHANGELOG.md",
+]
+
+[tool.flet.android]
+split_per_abi = true
+
+[tool.flet.android.permission]
+"android.permission.INTERNET" = true
+"android.permission.ACCESS_NETWORK_STATE" = true

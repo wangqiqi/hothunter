@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-05-24
+
+### Added
+
+- `scripts/onekey_env.sh`：环境 check / install / sync / upgrade / doctor 等交互命令
+- `pyproject.toml`：Flet Android 打包配置（网络权限、split_per_abi）
+- `scripts/onekey_start.sh`：一键 start / stop / build-apk / install-apk 等（`env` 委托 onekey_env）
+- 构建产物目录 `dist/apk/`、`dist/aab/`
+- `src/ui/theme.py`、`src/ui/components.py`：对齐 HTML 原型的主题与组件
+
+### Changed
+
+- README：以 APK 打包为国内主推分发方式，补充 `onekey_env` / `onekey_start` 脚本说明
+- **UI 重构**：430px 居中手机壳、渐变顶栏、搜索卡片、双列平台、彩色徽章、热词标签云、状态栏
+- 设计规范移至 `docs/DESIGN_SPEC.md`
+
 ## [0.5.0] - 2026-05-24
 
 ### Added
