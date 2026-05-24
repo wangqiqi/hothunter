@@ -8,7 +8,7 @@ import time
 import flet as ft
 
 from src.analysis.word_freq import analyze_titles
-from src.config import DEFAULT_KEYWORD, PLATFORMS, SEARCH_ONLY_PLATFORMS, THEME
+from src.config import DEFAULT_KEYWORD, PLATFORMS, SEARCH_ONLY_PLATFORMS
 from src.crawler.registry import fetch_all
 from src.models import Article
 from src.modes import FetchMode, MODE_LABELS, analysis_keyword, storage_key
@@ -16,25 +16,32 @@ from src.storage.db import ArticleStore
 from src.ui import components as ui
 from src.ui.theme import (
     APP_MAX_WIDTH,
-    BORDER,
     FONT_FAMILY,
     PAGE_PAD_H,
-    RADIUS_LG,
     SPACE_MD,
     SPACE_SM,
+    ThemeController,
+    apply_grouped_style,
     grouped_surface,
+    init_theme,
     ios_filled_button_style,
     ios_secondary_button_style,
+    palette,
+    style_dropdown,
+    style_text_field,
 )
 from src.utils.article_view import ALL_PLATFORMS, DEFAULT_SORT, SORT_OPTIONS, apply_view
 from src.utils.refresh_scheduler import format_next_hour, seconds_until_next_hour
 
 
 def run_app(page: ft.Page) -> None:
+    theme_ctrl = init_theme(ThemeController())
+
     page.title = "热点猎手"
-    page.theme_mode = ft.ThemeMode.DARK
+    page.window.icon = "icon.png"
+    page.theme_mode = theme_ctrl.flet_theme_mode()
     page.theme = ft.Theme(font_family=FONT_FAMILY)
-    page.bgcolor = THEME["bg_primary"]
+    page.bgcolor = palette()["bg_primary"]
     page.padding = 0
     page.scroll = ft.ScrollMode.HIDDEN
     page.window.width = APP_MAX_WIDTH
@@ -53,9 +60,15 @@ def run_app(page: ft.Page) -> None:
     scroll_ref = ft.Ref[ft.Column]()
     bottom_nav_host = ft.Container()
     back_top_host: ft.Container
+    header_host = ft.Container()
+    phone_wrap = ft.Container()
+    controls_card = ft.Container()
 
-    mode_hint = ft.Text("", color=THEME["text_secondary"], size=12)
-    refresh_hint = ft.Text("", color=THEME["text_muted"], size=11)
+    def _p() -> dict[str, str]:
+        return palette()
+
+    mode_hint = ft.Text("", size=12)
+    refresh_hint = ft.Text("", size=11)
     mode_tabs_host = ft.Container()
 
     keyword_field = ft.TextField(
@@ -63,9 +76,6 @@ def run_app(page: ft.Page) -> None:
         label="搜索关键词",
         hint_text="输入关注的主题词，如 AI、新能源",
         border_color="transparent",
-        focused_border_color=THEME["primary"],
-        bgcolor=THEME["bg_card"],
-        color=THEME["text_primary"],
         text_size=15,
         border_radius=10,
         content_padding=ft.padding.symmetric(horizontal=12, vertical=10),
@@ -77,21 +87,17 @@ def run_app(page: ft.Page) -> None:
     hourly_refresh_switch = ft.Switch(
         label="整点自动刷新",
         value=True,
-        active_color=THEME["primary"],
-        label_style=ft.TextStyle(color=THEME["text_secondary"], size=13),
         scale=0.9,
     )
 
-    status_message = ft.Text("就绪", size=13, color=THEME["text_secondary"], expand=True)
-    status_count = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=THEME["primary_light"])
-    status_dot = ft.Container(width=10, height=10, border_radius=5, bgcolor=THEME["text_muted"])
+    status_message = ft.Text("就绪", size=13, expand=True)
+    status_count = ft.Text("", size=13, weight=ft.FontWeight.W_600)
+    status_dot = ft.Container(width=10, height=10, border_radius=5)
 
-    results_count_text = ft.Text("0 条结果", size=12, color=THEME["text_muted"])
+    results_count_text = ft.Text("0 条结果", size=12)
+    results_title = ft.Text("热点列表", size=17, weight=ft.FontWeight.W_600)
     results_header = ft.Row(
-        [
-            ft.Text("热点列表", size=17, weight=ft.FontWeight.W_600, color=THEME["text_primary"]),
-            results_count_text,
-        ],
+        [results_title, results_count_text],
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
     )
     results_column = ft.Column(spacing=SPACE_SM)
@@ -101,10 +107,6 @@ def run_app(page: ft.Page) -> None:
         label="排序方式",
         value=DEFAULT_SORT,
         options=[ft.dropdown.Option(key, label) for key, label in SORT_OPTIONS.items()],
-        border_color=BORDER,
-        focused_border_color=THEME["primary"],
-        bgcolor=THEME["bg_card"],
-        color=THEME["text_primary"],
         expand=True,
     )
 
@@ -112,9 +114,6 @@ def run_app(page: ft.Page) -> None:
         label="标题筛选",
         hint_text="在当前结果中按标题关键词过滤",
         border_color="transparent",
-        focused_border_color=THEME["primary"],
-        bgcolor=THEME["bg_card"],
-        color=THEME["text_primary"],
         border_radius=10,
         content_padding=ft.padding.symmetric(horizontal=12, vertical=10),
         text_size=14,
@@ -126,27 +125,23 @@ def run_app(page: ft.Page) -> None:
         value=ALL_PLATFORMS,
         options=[ft.dropdown.Option(ALL_PLATFORMS, "全部平台")]
         + [ft.dropdown.Option(p["name"], p["name"]) for p in PLATFORMS],
-        border_color=BORDER,
-        focused_border_color=THEME["primary"],
-        bgcolor=THEME["bg_card"],
-        color=THEME["text_primary"],
         expand=True,
     )
 
+    fetch_label = ft.Text("立即刷新", size=15, weight=ft.FontWeight.W_600)
     fetch_btn = ft.Container(
-        content=ft.Text("立即刷新", size=15, weight=ft.FontWeight.W_600, color="#ffffff"),
+        content=fetch_label,
         alignment=ft.alignment.center,
         expand=True,
         ink=True,
-        **ios_filled_button_style(),
     )
 
+    history_label = ft.Text("历史", size=15, weight=ft.FontWeight.W_500)
     history_btn = ft.Container(
-        content=ft.Text("历史", size=15, weight=ft.FontWeight.W_500, color=THEME["text_primary"]),
+        content=history_label,
         alignment=ft.alignment.center,
         expand=True,
         ink=True,
-        **ios_secondary_button_style(),
     )
 
     platform_chips: dict[str, ft.Container] = {}
@@ -238,7 +233,7 @@ def run_app(page: ft.Page) -> None:
         analysis_wrap.controls.clear()
         if not words:
             analysis_wrap.controls.append(
-                ft.Text("暂无分析数据，请先抓取或查看历史", color=THEME["text_muted"], size=13)
+                ft.Text("暂无分析数据，请先抓取或查看历史", color=_p()["text_muted"], size=13)
             )
         else:
             for idx, (word, count) in enumerate(words):
@@ -282,8 +277,9 @@ def run_app(page: ft.Page) -> None:
         refresh_list_display()
 
     def set_status(message: str, *, active: bool = False, count: str = "") -> None:
+        p = _p()
         status_message.value = message
-        status_dot.bgcolor = THEME["success"] if active else THEME["text_muted"]
+        status_dot.bgcolor = p["success"] if active else p["text_muted"]
         status_count.value = count
         status_count.visible = bool(count)
 
@@ -414,6 +410,51 @@ def run_app(page: ft.Page) -> None:
         set_active_nav("hot")
         page.update()
 
+    def on_appearance_toggle(_: ft.ControlEvent) -> None:
+        theme_ctrl.toggle()
+        apply_theme_styles()
+        page.update()
+
+    def apply_theme_styles() -> None:
+        p = _p()
+        page.theme_mode = theme_ctrl.flet_theme_mode()
+        page.bgcolor = p["bg_primary"]
+        phone_wrap.bgcolor = p["bg_primary"]
+
+        mode_hint.color = p["text_secondary"]
+        refresh_hint.color = p["text_muted"]
+        style_text_field(keyword_field)
+        style_text_field(list_filter_field)
+        style_dropdown(sort_dropdown)
+        style_dropdown(platform_filter)
+        hourly_refresh_switch.active_color = p["primary"]
+        hourly_refresh_switch.label_style = ft.TextStyle(color=p["text_secondary"], size=13)
+        status_message.color = p["text_secondary"]
+        status_count.color = p["primary_light"]
+        results_title.color = p["text_primary"]
+        results_count_text.color = p["text_muted"]
+        fetch_label.color = p["on_primary"]
+        history_label.color = p["text_primary"]
+        for key, value in ios_filled_button_style().items():
+            setattr(fetch_btn, key, value)
+        for key, value in ios_secondary_button_style().items():
+            setattr(history_btn, key, value)
+
+        header_host.content = ui.build_header(on_appearance_toggle)
+        rebuild_mode_tabs()
+        for plat in PLATFORMS:
+            platform_chips[plat["id"]] = platform_chip(plat)
+        rebuild_platform_grid()
+        apply_grouped_style(controls_card)
+        apply_grouped_style(status_bar)
+        apply_grouped_style(analysis_box)
+        bottom_nav_host.content = ui.build_bottom_nav(active_nav, on_nav_select)
+        if isinstance(back_top_host.content, ft.IconButton):
+            back_top_host.content.icon_color = p["on_primary"]
+            back_top_host.content.bgcolor = p["primary"]
+        refresh_list_display()
+        refresh_analysis_for_current_mode()
+
     back_top_host = ui.build_back_to_top(visible=False, on_click=scroll_to_top)
 
     def on_scroll(e: ft.OnScrollEvent) -> None:
@@ -451,7 +492,7 @@ def run_app(page: ft.Page) -> None:
     rebuild_platform_grid()
     rebuild_mode_tabs()
 
-    controls_section = ui.search_card(
+    controls_card = ui.search_card(
         ft.Column(
             [
                 ui.section_label("抓取模式", "grid"),
@@ -480,21 +521,20 @@ def run_app(page: ft.Page) -> None:
         **grouped_surface(),
     )
 
+    analysis_box = ft.Container(content=analysis_wrap, padding=SPACE_MD, **grouped_surface())
+
     scroll_column = ft.Column(
         [
-            ui.build_header(),
+            header_host,
             ft.Container(
-                content=controls_section,
+                content=controls_card,
                 padding=ft.padding.symmetric(horizontal=PAGE_PAD_H),
                 key="section-settings",
             ),
             status_bar,
             ft.Container(
                 content=ft.Column(
-                    [
-                        results_header,
-                        results_column,
-                    ],
+                    [results_header, results_column],
                     spacing=SPACE_MD,
                 ),
                 padding=ft.padding.symmetric(horizontal=PAGE_PAD_H, vertical=6),
@@ -502,14 +542,7 @@ def run_app(page: ft.Page) -> None:
             ),
             ft.Container(
                 content=ft.Column(
-                    [
-                        ui.section_header("热点分析", "chart", ""),
-                        ft.Container(
-                            content=analysis_wrap,
-                            padding=SPACE_MD,
-                            **grouped_surface(),
-                        ),
-                    ],
+                    [ui.section_header("热点分析", "chart", ""), analysis_box],
                     spacing=SPACE_MD,
                 ),
                 padding=ft.padding.symmetric(horizontal=PAGE_PAD_H, vertical=6),
@@ -543,14 +576,16 @@ def run_app(page: ft.Page) -> None:
         expand=True,
     )
 
+    phone_wrap = ui.phone_shell(shell_body)
     page.add(
         ft.Row(
-            [ui.phone_shell(shell_body)],
+            [phone_wrap],
             alignment=ft.MainAxisAlignment.CENTER,
             expand=True,
         )
     )
 
+    apply_theme_styles()
     apply_mode_ui()
     update_refresh_hint()
     set_status(f"就绪 · {MODE_LABELS[current_mode]}")

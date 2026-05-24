@@ -1,31 +1,30 @@
-"""可复用 UI 组件 — iOS 深色紧凑风格。"""
+"""可复用 UI 组件 — iOS 风格，随浅色/深色主题切换。"""
 
 from __future__ import annotations
 
 import flet as ft
 
-from src.config import SEARCH_ONLY_PLATFORMS, THEME
+from src.config import SEARCH_ONLY_PLATFORMS
 from src.models import Article
 from src.ui.theme import (
-    BORDER,
     PAGE_PAD_H,
     PLATFORM_STYLE,
-    RADIUS_LG,
     RADIUS_MD,
     RADIUS_SM,
     SPACE_MD,
     SPACE_SM,
     SPACE_XS,
-    WORD_TAG_LEVELS,
+    border_color,
     grouped_surface,
-    ios_filled_button_style,
-    ios_secondary_button_style,
+    palette,
     platform_badge_style,
     platform_short,
+    word_tag_levels,
 )
 
 
 def section_label(text: str, icon: str | None = None) -> ft.Row:
+  p = palette()
   icons = {
       "search": ft.Icons.SEARCH,
       "grid": ft.Icons.GRID_VIEW,
@@ -34,26 +33,22 @@ def section_label(text: str, icon: str | None = None) -> ft.Row:
   }
   items: list[ft.Control] = []
   if icon and icon in icons:
-      items.append(ft.Icon(icons[icon], size=12, color=THEME["text_muted"]))
+      items.append(ft.Icon(icons[icon], size=12, color=p["text_muted"]))
   items.append(
-      ft.Text(
-          text.upper(),
-          size=11,
-          weight=ft.FontWeight.W_600,
-          color=THEME["text_muted"],
-      )
+      ft.Text(text.upper(), size=11, weight=ft.FontWeight.W_600, color=p["text_muted"])
   )
   return ft.Row(items, spacing=SPACE_XS)
 
 
 def section_header(title: str, icon: str, count_text: str = "") -> ft.Row:
+  p = palette()
   return ft.Row(
       [
-          ft.Text(title, size=17, weight=ft.FontWeight.W_600, color=THEME["text_primary"]),
+          ft.Text(title, size=17, weight=ft.FontWeight.W_600, color=p["text_primary"]),
           ft.Text(
               count_text,
               size=13,
-              color=THEME["text_secondary"],
+              color=p["text_secondary"],
               visible=bool(count_text),
           ),
       ],
@@ -61,36 +56,48 @@ def section_header(title: str, icon: str, count_text: str = "") -> ft.Row:
   )
 
 
-def build_header() -> ft.Container:
-  """大标题导航区 — 无渐变装饰，贴近 iOS 首屏。"""
+def build_header(on_appearance_toggle) -> ft.Container:
+  """大标题 + 浅色/深色切换。"""
+  p = palette()
+  from src.ui.theme import get_theme
+
+  theme = get_theme()
   return ft.Container(
-      content=ft.Column(
+      content=ft.Row(
           [
-              ft.Text(
-                  "热点猎手",
-                  size=28,
-                  weight=ft.FontWeight.W_700,
-                  color=THEME["text_primary"],
+              ft.Column(
+                  [
+                      ft.Text(
+                          "热点猎手",
+                          size=28,
+                          weight=ft.FontWeight.W_700,
+                          color=p["text_primary"],
+                      ),
+                      ft.Text(
+                          "实时流 · 定制追踪 · 整点刷新",
+                          size=13,
+                          color=p["text_secondary"],
+                      ),
+                  ],
+                  spacing=2,
+                  expand=True,
               ),
-              ft.Text(
-                  "实时流 · 定制追踪 · 整点刷新",
-                  size=13,
-                  color=THEME["text_secondary"],
+              ft.IconButton(
+                  icon=ft.Icons.DARK_MODE_OUTLINED if theme.is_dark() else ft.Icons.LIGHT_MODE_OUTLINED,
+                  icon_color=p["primary"],
+                  tooltip="切换浅色 / 深色",
+                  on_click=on_appearance_toggle,
               ),
           ],
-          spacing=2,
+          vertical_alignment=ft.CrossAxisAlignment.CENTER,
       ),
-      padding=ft.padding.only(left=PAGE_PAD_H, right=PAGE_PAD_H, top=12, bottom=8),
-      border=ft.border.only(bottom=ft.BorderSide(0.5, BORDER)),
+      padding=ft.padding.only(left=PAGE_PAD_H, right=PAGE_PAD_H - 4, top=12, bottom=8),
+      border=ft.border.only(bottom=ft.BorderSide(0.5, border_color())),
   )
 
 
-def build_mode_tabs(
-    current: str,
-    on_stream,
-    on_custom,
-) -> ft.Container:
-  """iOS 分段控件（UISegmentedControl）风格。"""
+def build_mode_tabs(current: str, on_stream, on_custom) -> ft.Container:
+  p = palette()
 
   def tab(label: str, value: str, on_click) -> ft.Container:
       selected = current == value
@@ -99,11 +106,11 @@ def build_mode_tabs(
               label,
               size=13,
               weight=ft.FontWeight.W_600 if selected else ft.FontWeight.W_500,
-              color=THEME["text_primary"] if selected else THEME["text_secondary"],
+              color=p["text_primary"] if selected else p["text_secondary"],
           ),
           padding=ft.padding.symmetric(horizontal=10, vertical=7),
           border_radius=RADIUS_SM,
-          bgcolor=THEME["bg_elevated"] if selected else "transparent",
+          bgcolor=p["bg_elevated"] if selected else "transparent",
           on_click=on_click,
           ink=not selected,
           expand=True,
@@ -112,15 +119,13 @@ def build_mode_tabs(
 
   return ft.Container(
       content=ft.Row(
-          [
-              tab("实时流", "stream", on_stream),
-              tab("定制", "custom", on_custom),
-          ],
+          [tab("实时流", "stream", on_stream), tab("定制", "custom", on_custom)],
           spacing=2,
       ),
       padding=2,
-      bgcolor=THEME["bg_card"],
+      bgcolor=p["bg_card"],
       border_radius=RADIUS_MD,
+      border=ft.border.all(0.5, border_color()),
   )
 
 
@@ -130,17 +135,18 @@ def build_platform_chip(
     dimmed: bool,
     on_toggle,
 ) -> ft.Container:
+  p = palette()
   pid = platform["id"]
   style = PLATFORM_STYLE.get(pid, PLATFORM_STYLE["zhihu"])
   subtitle = "仅定制" if pid in SEARCH_ONLY_PLATFORMS else ("已选" if selected else "")
 
   checkbox = ft.Container(
-      content=ft.Icon(ft.Icons.CHECK, size=12, color="#ffffff") if selected else None,
+      content=ft.Icon(ft.Icons.CHECK, size=12, color=p["on_primary"]) if selected else None,
       width=18,
       height=18,
       border_radius=5,
-      border=ft.border.all(1.5, THEME["primary"] if selected else THEME["text_muted"]),
-      bgcolor=THEME["primary"] if selected else None,
+      border=ft.border.all(1.5, p["primary"] if selected else p["text_muted"]),
+      bgcolor=p["primary"] if selected else None,
       alignment=ft.alignment.center,
   )
 
@@ -162,14 +168,14 @@ def build_platform_chip(
                           platform["name"],
                           size=13,
                           weight=ft.FontWeight.W_500,
-                          color=THEME["text_primary"],
+                          color=p["text_primary"],
                           max_lines=1,
                           overflow=ft.TextOverflow.ELLIPSIS,
                       ),
                       ft.Text(
                           subtitle,
                           size=10,
-                          color=THEME["warning"] if pid in SEARCH_ONLY_PLATFORMS else THEME["text_muted"],
+                          color=p["warning"] if pid in SEARCH_ONLY_PLATFORMS else p["text_muted"],
                           visible=bool(subtitle),
                       ),
                   ],
@@ -181,8 +187,8 @@ def build_platform_chip(
       ),
       padding=ft.padding.symmetric(horizontal=10, vertical=8),
       border_radius=RADIUS_MD,
-      bgcolor=THEME["bg_card"] if not selected else "#0A84FF18",
-      border=ft.border.all(1, THEME["primary"] if selected else BORDER),
+      bgcolor=p["bg_card"] if not selected else p["primary_tint"],
+      border=ft.border.all(1, p["primary"] if selected else border_color()),
       on_click=on_toggle,
       ink=True,
       expand=True,
@@ -200,7 +206,7 @@ def article_card_subtitle(article: Article) -> str:
 
 
 def build_article_row(article: Article, on_open_url) -> ft.Container:
-  """分组列表单行。"""
+  p = palette()
   badge_bg, badge_fg = platform_badge_style(article.platform)
   short_name = platform_short(article.platform)
   subtitle = article_card_subtitle(article)
@@ -222,14 +228,14 @@ def build_article_row(article: Article, on_open_url) -> ft.Container:
                           article.title,
                           size=15,
                           weight=ft.FontWeight.W_500,
-                          color=THEME["text_primary"],
+                          color=p["text_primary"],
                           max_lines=2,
                           overflow=ft.TextOverflow.ELLIPSIS,
                       ),
                       ft.Text(
                           meta,
                           size=12,
-                          color=THEME["text_secondary"],
+                          color=p["text_secondary"],
                           max_lines=1,
                           overflow=ft.TextOverflow.ELLIPSIS,
                           visible=bool(meta),
@@ -238,7 +244,7 @@ def build_article_row(article: Article, on_open_url) -> ft.Container:
                   spacing=2,
                   expand=True,
               ),
-              ft.Icon(ft.Icons.CHEVRON_RIGHT, size=18, color=THEME["text_muted"]),
+              ft.Icon(ft.Icons.CHEVRON_RIGHT, size=18, color=p["text_muted"]),
           ],
           spacing=SPACE_SM,
           vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -250,16 +256,16 @@ def build_article_row(article: Article, on_open_url) -> ft.Container:
 
 
 def build_articles_group(articles: list[Article], on_open_url) -> ft.Control:
-  """iOS UITableView 分组列表样式。"""
   if not articles:
       return build_empty_state("暂无结果", "刷新或调整筛选条件")
   rows: list[ft.Control] = []
+  sep = border_color()
   for i, article in enumerate(articles):
       rows.append(build_article_row(article, on_open_url))
       if i < len(articles) - 1:
           rows.append(
               ft.Container(
-                  content=ft.Divider(height=0.5, color=BORDER),
+                  content=ft.Divider(height=0.5, color=sep),
                   padding=ft.padding.only(left=44),
               )
           )
@@ -271,15 +277,12 @@ def build_articles_group(articles: list[Article], on_open_url) -> ft.Control:
 
 
 def build_article_card(article: Article, on_open_url) -> ft.Container:
-  """兼容旧调用 — 委托分组行。"""
-  return ft.Container(
-      content=build_article_row(article, on_open_url),
-      **grouped_surface(),
-  )
+  return ft.Container(content=build_article_row(article, on_open_url), **grouped_surface())
 
 
 def build_word_tag(word: str, count: int, level: int) -> ft.Container:
-  bg, fg = WORD_TAG_LEVELS[level % len(WORD_TAG_LEVELS)]
+  levels = word_tag_levels()
+  bg, fg = levels[level % len(levels)]
   return ft.Container(
       content=ft.Row(
           [
@@ -295,12 +298,13 @@ def build_word_tag(word: str, count: int, level: int) -> ft.Container:
 
 
 def build_empty_state(title: str, desc: str) -> ft.Container:
+  p = palette()
   return ft.Container(
       content=ft.Column(
           [
-              ft.Icon(ft.Icons.INBOX_OUTLINED, size=32, color=THEME["text_muted"]),
-              ft.Text(title, size=15, weight=ft.FontWeight.W_600, color=THEME["text_primary"]),
-              ft.Text(desc, size=12, color=THEME["text_muted"], text_align=ft.TextAlign.CENTER),
+              ft.Icon(ft.Icons.INBOX_OUTLINED, size=32, color=p["text_muted"]),
+              ft.Text(title, size=15, weight=ft.FontWeight.W_600, color=p["text_primary"]),
+              ft.Text(desc, size=12, color=p["text_muted"], text_align=ft.TextAlign.CENTER),
           ],
           horizontal_alignment=ft.CrossAxisAlignment.CENTER,
           spacing=SPACE_SM,
@@ -312,6 +316,7 @@ def build_empty_state(title: str, desc: str) -> ft.Container:
 
 
 def build_status_bar(message: str, count_text: str, active: bool) -> ft.Container:
+  p = palette()
   return ft.Container(
       content=ft.Row(
           [
@@ -319,14 +324,14 @@ def build_status_bar(message: str, count_text: str, active: bool) -> ft.Containe
                   width=8,
                   height=8,
                   border_radius=4,
-                  bgcolor=THEME["success"] if active else THEME["text_muted"],
+                  bgcolor=p["success"] if active else p["text_muted"],
               ),
-              ft.Text(message, size=13, color=THEME["text_secondary"], expand=True),
+              ft.Text(message, size=13, color=p["text_secondary"], expand=True),
               ft.Text(
                   count_text,
                   size=13,
                   weight=ft.FontWeight.W_500,
-                  color=THEME["primary_light"],
+                  color=p["primary_light"],
                   visible=bool(count_text),
               ),
           ],
@@ -362,9 +367,11 @@ _NAV_ICONS = {
 
 
 def build_bottom_nav(active: str, on_select) -> ft.Container:
+  p = palette()
+
   def item(nav_id: str, label: str, icon_key: str) -> ft.Container:
       selected = active == nav_id
-      color = THEME["primary"] if selected else THEME["text_muted"]
+      color = p["primary"] if selected else p["text_muted"]
       return ft.Container(
           content=ft.Column(
               [
@@ -389,19 +396,20 @@ def build_bottom_nav(active: str, on_select) -> ft.Container:
           [item(nid, label, icon) for nid, label, icon in NAV_ITEMS],
           alignment=ft.MainAxisAlignment.SPACE_AROUND,
       ),
-      bgcolor=THEME["bg_secondary"],
-      border=ft.border.only(top=ft.BorderSide(0.5, BORDER)),
+      bgcolor=p["bg_secondary"],
+      border=ft.border.only(top=ft.BorderSide(0.5, border_color())),
       padding=ft.padding.only(left=8, right=8, top=4, bottom=8),
   )
 
 
 def build_back_to_top(visible: bool, on_click) -> ft.Container:
+  p = palette()
   return ft.Container(
       content=ft.IconButton(
           icon=ft.Icons.KEYBOARD_ARROW_UP_ROUNDED,
-          icon_color="#ffffff",
+          icon_color=p["on_primary"],
           icon_size=22,
-          bgcolor=THEME["primary"],
+          bgcolor=p["primary"],
           style=ft.ButtonStyle(shape=ft.CircleBorder()),
           tooltip="返回顶部",
           on_click=on_click,
@@ -414,9 +422,13 @@ def build_back_to_top(visible: bool, on_click) -> ft.Container:
 def phone_shell(content: ft.Control) -> ft.Container:
   from src.ui.theme import APP_MAX_WIDTH
 
+  p = palette()
   return ft.Container(
       content=content,
       width=APP_MAX_WIDTH,
-      bgcolor=THEME["bg_primary"],
-      border=ft.border.only(left=ft.BorderSide(0.5, BORDER), right=ft.BorderSide(0.5, BORDER)),
+      bgcolor=p["bg_primary"],
+      border=ft.border.only(
+          left=ft.BorderSide(0.5, border_color()),
+          right=ft.BorderSide(0.5, border_color()),
+      ),
   )

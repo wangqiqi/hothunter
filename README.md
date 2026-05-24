@@ -28,7 +28,7 @@
 
 ## 界面预览
 
-深色移动端 UI（430px 手机壳），对齐 [HTML 原型](docs/prototype/index.html)：渐变顶栏、双列平台选择、卡片式热点列表、热词标签云。
+iOS 风格移动端 UI（430px 手机壳）：**浅色 / 深色**一键切换（顶栏图标）、底栏快速导航、分组热点列表、热词标签云。主题偏好保存在 `~/.hothunter/settings.json`。
 
 > 本地运行：`./scripts/onekey_start.sh start` 即可在桌面预览。
 
@@ -125,11 +125,15 @@ python hotspot_app.py
 
 ```
 hothunter/
+├── assets/
+│   ├── icon.png            # 应用图标（1024×1024）
+│   └── icon_android.png    # Android adaptive 前景
 ├── hotspot_app.py          # 应用入口（调试 / 打包）
 ├── pyproject.toml          # 版本与 Flet Android 配置
 ├── scripts/
 │   ├── onekey_env.sh       # 环境管理
-│   └── onekey_start.sh     # 调试 / 打包 / 安装
+│   ├── onekey_start.sh     # 调试 / 打包 / 安装
+│   └── generate_icon.py    # 重新生成 assets/icon*.png
 ├── src/
 │   ├── crawler/            # 各平台爬虫
 │   ├── ui/                 # Flet 界面（对齐原型）

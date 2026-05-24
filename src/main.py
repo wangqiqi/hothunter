@@ -15,7 +15,8 @@ from src.ui.app import run_app
 
 def main() -> None:
     port = int(os.environ.get("HOTHUNTER_PORT", os.environ.get("FLET_SERVER_PORT", "8550")))
-    ft.app(target=run_app, port=port)
+    assets_dir = str(ROOT / "assets")
+    ft.app(target=run_app, port=port, assets_dir=assets_dir)
 
 
 if __name__ == "__main__":

@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-05-24
+
+### Added
+
+- 应用图标 `assets/icon*.png`（雷达 + 火焰，1024×1024）及 `scripts/generate_icon.py`
+- **浅色 / 深色双主题**：顶栏按钮一键切换，偏好写入 `~/.hothunter/settings.json`
+- `tests/test_theme.py` 主题切换单元测试
+
+### Changed
+
+- 桌面窗口 / 任务栏 / APK 打包统一使用 `assets/icon.png`（`page.window.icon` + Flet adaptive icon）
+- 热点列表改为 iOS 分组 UITableView 样式（单行 + 分隔线 + 右箭头）
+- 顶栏去渐变装饰，按钮改为系统蓝实心 / 次级填充样式
+
 ## [0.8.0] - 2026-05-24
 
 ### Added
