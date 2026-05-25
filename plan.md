@@ -1,7 +1,7 @@
 # 热点猎手 (Hotspot Hunter) 项目计划
 
 **日期**: 2026-05-24  
-**当前版本**: v0.12.0  
+**当前版本**: v0.13.0  
 **阶段**: Phase 7 — 健壮性 / 边界值 / 异常处理
 
 工作目录：`/home/jwzhou/workspace/hothunter`

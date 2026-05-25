@@ -36,7 +36,7 @@ usage() {
   install      创建 .venv 并安装全部依赖（首次推荐）
   sync         在已有 .venv 上同步 requirements.txt
   upgrade      升级 pip 与已安装包
-  reinstall    删除 .venv 后重新 install
+  install-android-sdk  安装 Android SDK（build-apk 必需，默认 ~/Android/Sdk）
   doctor       完整环境诊断（check + 构建工具提示）
   freeze       输出当前环境 pip freeze
   clean        仅删除虚拟环境 .venv
@@ -201,6 +201,8 @@ ensure_flutter_in_path() {
     local d
     for d in \
         "${FLUTTER_HOME:-}" \
+        "$HOME/flutter/3.24.5" \
+        "$HOME/flutter/3.24.0" \
         "$HOME/flutter/stable" \
         "$HOME/flutter" \
         "$HOME/snap/flutter/common/flutter"; do
@@ -242,6 +244,13 @@ check_optional_tools() {
         ok "  Java: $(java -version 2>&1 | head -1)"
     else
         warn "  Java: 未安装（build-apk 时 Flet 会自动下载 JDK 17）"
+    fi
+  local android_home="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}}"
+    if [[ -d "$android_home/platforms" ]]; then
+        ok "  Android SDK: $android_home"
+    else
+        warn "  Android SDK: 未安装（build-apk 必需，ANDROID_HOME）"
+        echo "    安装: ./scripts/onekey_env.sh install-android-sdk"
     fi
     if command -v adb >/dev/null 2>&1; then
         ok "  ADB:  $(command -v adb)"
@@ -335,6 +344,41 @@ cmd_upgrade() {
     cmd_check || true
 }
 
+cmd_install_android_sdk() {
+    local sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}}"
+    info "安装 Android SDK → $sdk_root"
+    mkdir -p "$sdk_root/cmdline-tools"
+    if [[ ! -x "$sdk_root/cmdline-tools/latest/bin/sdkmanager" ]]; then
+        local tmp
+        tmp="$(mktemp -d)"
+        curl -fsSL -o "$tmp/cmdline-tools.zip" \
+            "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
+        unzip -q "$tmp/cmdline-tools.zip" -d "$tmp"
+        rm -rf "$sdk_root/cmdline-tools/latest"
+        mkdir -p "$sdk_root/cmdline-tools"
+        mv "$tmp/cmdline-tools" "$sdk_root/cmdline-tools/latest"
+        rm -rf "$tmp"
+        ok "已安装 command-line tools"
+    else
+        ok "command-line tools 已存在"
+    fi
+    export ANDROID_HOME="$sdk_root"
+    export ANDROID_SDK_ROOT="$sdk_root"
+    export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+    info "下载 platform-tools / build-tools / android-34 ..."
+    yes | sdkmanager --sdk_root="$sdk_root" \
+        "platform-tools" "platforms;android-34" "build-tools;34.0.0" "cmdline-tools;latest" \
+        || warn "sdkmanager 部分包可能已安装，继续..."
+    if command -v flutter >/dev/null 2>&1; then
+        info "接受 Android 许可 (flutter doctor --android-licenses)..."
+        yes | flutter doctor --android-licenses >/dev/null 2>&1 || true
+    fi
+    ok "Android SDK 就绪: $sdk_root"
+    echo "  建议加入 ~/.bashrc:"
+    echo "    export ANDROID_HOME=\"$sdk_root\""
+    echo "    export PATH=\"\$ANDROID_HOME/platform-tools:\$PATH\""
+}
+
 cmd_reinstall() {
     warn "将删除并重建: $VENV_DIR"
     if [[ -d "$VENV_DIR" ]]; then
@@ -426,6 +470,7 @@ main() {
         sync)         cmd_sync ;;
         upgrade)      cmd_upgrade ;;
         reinstall)    cmd_reinstall ;;
+        install-android-sdk) cmd_install_android_sdk ;;
         doctor)       cmd_doctor ;;
         freeze)       cmd_freeze ;;
         clean)        cmd_clean ;;

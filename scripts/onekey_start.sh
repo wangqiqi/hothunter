@@ -318,29 +318,142 @@ flet_build_bin() {
 }
 
 require_flutter_for_build() {
-    # 与 onekey_env.sh 保持一致的探测路径
-    if command -v flutter >/dev/null 2>&1; then
-        return 0
-    fi
+    # 优先使用 Flet 0.25 验证过的 3.24.x（即使 PATH 里已有 stable）
     local d
     for d in \
         "${FLUTTER_HOME:-}" \
+        "$HOME/flutter/3.24.5" \
+        "$HOME/flutter/3.24.0" \
         "$HOME/flutter/stable" \
         "$HOME/flutter" \
         "$HOME/snap/flutter/common/flutter"; do
         [[ -n "$d" && -x "$d/bin/flutter" ]] || continue
         export PATH="$d/bin:$PATH"
-        command -v flutter >/dev/null 2>&1 && return 0
+        return 0
     done
+    if command -v flutter >/dev/null 2>&1; then
+        return 0
+    fi
     err "未找到 Flutter SDK。Flet 0.25 打包 APK 需要 Flutter >= 3.24，且必须在 PATH 中。"
     echo
-    echo "  安装示例:"
-    echo "    git clone https://github.com/flutter/flutter.git -b stable --depth 1 ~/flutter/stable"
-    echo "    export PATH=\"\$HOME/flutter/stable/bin:\$PATH\""
-    echo "    flutter doctor"
-    echo
+    echo "  推荐: git clone -b 3.24.5 --depth 1 https://github.com/flutter/flutter.git ~/flutter/3.24.5"
     echo "  环境检查: ./scripts/onekey_env.sh check"
     exit 1
+}
+
+patch_flutter_sdk_gradle_mirrors() {
+    local flutter_root=""
+    if command -v flutter >/dev/null 2>&1; then
+        flutter_root="$(dirname "$(dirname "$(command -v flutter)")")"
+    fi
+    [[ -n "$flutter_root" && -f "$flutter_root/packages/flutter_tools/gradle/settings.gradle.kts" ]] || return 0
+    python3 - "$flutter_root/packages/flutter_tools/gradle/settings.gradle.kts" <<'PY'
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+if "maven.aliyun.com" in text:
+    sys.exit(0)
+needle = "    repositories {\n        google()"
+insert = (
+    "    repositories {\n"
+    "        maven { url = uri(\"https://maven.aliyun.com/repository/google\") }\n"
+    "        maven { url = uri(\"https://maven.aliyun.com/repository/public\") }\n"
+    "        maven { url = uri(\"https://maven.aliyun.com/repository/gradle-plugin\") }\n"
+    "        google()"
+)
+if needle not in text:
+    sys.exit(0)
+path.write_text(text.replace(needle, insert, 1), encoding="utf-8")
+print(f"patched {path}")
+PY
+}
+
+patch_flutter_gradle_mirrors() {
+    local android_dir="$ROOT_DIR/build/flutter/android"
+    [[ -d "$android_dir" ]] || return 0
+    python3 - "$android_dir" <<'PY'
+import pathlib
+import sys
+
+android = pathlib.Path(sys.argv[1])
+mirror = (
+    "        maven { url 'https://maven.aliyun.com/repository/google' }\n"
+    "        maven { url 'https://maven.aliyun.com/repository/public' }\n"
+    "        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }\n"
+)
+before_project = """
+// Pub 插件（如 file_picker）自带 buildscript 仅指向 mavenCentral，403 时无法解析 AGP
+gradle.beforeProject { project ->
+    def mirrorRepos = { handler ->
+        handler.maven { url 'https://maven.aliyun.com/repository/google' }
+        handler.maven { url 'https://maven.aliyun.com/repository/public' }
+        handler.maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+    }
+    mirrorRepos(project.buildscript.repositories)
+    mirrorRepos(project.repositories)
+}
+
+"""
+
+for name in ("build.gradle", "settings.gradle"):
+    path = android / name
+    if not path.is_file():
+        continue
+    text = path.read_text(encoding="utf-8")
+    changed = False
+    if "maven.aliyun.com" not in text and "        google()" in text:
+        text = text.replace("        google()", mirror + "        google()")
+        changed = True
+    if name == "build.gradle" and "gradle.beforeProject" not in text:
+        anchor = "rootProject.buildDir"
+        if anchor in text:
+            text = text.replace(
+                f"\n{anchor}",
+                f"\n{before_project}{anchor}",
+                1,
+            )
+            changed = True
+    if changed:
+        path.write_text(text, encoding="utf-8")
+        print(f"patched {path.name}")
+PY
+}
+
+flutter_retry_build_apk() {
+    local version
+    version="$(grep -E '^version\s*=' "$ROOT_DIR/pyproject.toml" | head -1 | sed -E 's/.*"([^"]+)".*/\1/')"
+    [[ -d "$ROOT_DIR/build/flutter" ]] || return 1
+    patch_flutter_gradle_mirrors
+    info "重试 flutter build apk（Gradle 阿里云镜像已注入）..."
+    (
+        cd "$ROOT_DIR/build/flutter"
+        flutter build apk --split-per-abi --build-name "${version:-0.0.0}"
+    ) || return 1
+    mkdir -p "$DIST_APK_DIR"
+    find "$ROOT_DIR/build/flutter/build/app/outputs/flutter-apk" -name '*.apk' -exec cp -f {} "$DIST_APK_DIR/" \;
+    return 0
+}
+
+ensure_android_sdk() {
+    unset GRADLE_OPTS
+    # 旧版脚本写入的 init.gradle 会导致 Flutter plugin-loader 失败
+    if [[ -f "$HOME/.gradle/init.gradle" ]] && grep -q 'maven.aliyun.com' "$HOME/.gradle/init.gradle" 2>/dev/null; then
+        rm -f "$HOME/.gradle/init.gradle"
+        warn "已移除 ~/.gradle/init.gradle（与 Flutter Gradle 插件冲突）"
+    fi
+    export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}}"
+    export ANDROID_SDK_ROOT="$ANDROID_HOME"
+    export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+    if [[ ! -d "$ANDROID_HOME/platforms" ]]; then
+        err "未找到 Android SDK（需要 ANDROID_HOME）。"
+        echo
+        echo "  安装: ./scripts/onekey_env.sh install-android-sdk"
+        exit 1
+    fi
+    patch_flutter_sdk_gradle_mirrors
+    patch_flutter_gradle_mirrors
 }
 
 cmd_build_apk() {
@@ -352,14 +465,18 @@ cmd_build_apk() {
         exit 1
     fi
     require_flutter_for_build
+    ensure_android_sdk
     mkdir -p "$DIST_APK_DIR"
     build_cmd="$(flet_build_bin)"
     info "打包 APK → $DIST_APK_DIR"
     warn "首次构建会下载 Android SDK / JDK，请耐心等待..."
-    # Flet 0.25：未找到 Flutter 时 cleanup 会 KeyError('loading')，跳过 doctor 以输出清晰错误
     export FLET_CLI_SKIP_FLUTTER_DOCTOR="${FLET_CLI_SKIP_FLUTTER_DOCTOR:-1}"
+    patch_flutter_gradle_mirrors
     # shellcheck disable=SC2086
-    $build_cmd apk "$ROOT_DIR" -v -o "$DIST_APK_DIR"
+    if ! $build_cmd apk "$ROOT_DIR" -v -o "$DIST_APK_DIR"; then
+        warn "Flet 流程在 Gradle 阶段失败，注入镜像后重试 flutter build..."
+        flutter_retry_build_apk || exit 1
+    fi
     ok "APK 构建完成:"
     find "$DIST_APK_DIR" -name '*.apk' 2>/dev/null | sort || warn "未找到 apk 文件，请检查日志"
 }
@@ -373,6 +490,7 @@ cmd_build_aab() {
         exit 1
     fi
     require_flutter_for_build
+    ensure_android_sdk
     mkdir -p "$DIST_AAB_DIR"
     build_cmd="$(flet_build_bin)"
     info "打包 AAB → $DIST_AAB_DIR"

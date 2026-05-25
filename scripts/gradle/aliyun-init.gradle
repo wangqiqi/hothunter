@@ -1,0 +1,3 @@
+// 参考用：勿复制到 ~/.gradle/init.gradle（会与 Flutter plugin-loader 冲突）
+// 项目 build 失败后会自动 patch build/flutter/android/*.gradle 并重试 flutter build
+// Flutter SDK 内 settings.gradle.kts 由 onekey_start.sh 一次性 patch

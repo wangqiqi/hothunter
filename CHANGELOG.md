@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-05-25
+
+### Added
+
+- `onekey_env.sh install-android-sdk`：一键安装 Android SDK（command-line tools、platform-34、build-tools）
+- `scripts/gradle/aliyun-init.gradle`：Gradle 阿里云镜像说明（勿写入 `~/.gradle/init.gradle`）
+
+### Changed
+
+- `onekey_start.sh`：优先 Flutter 3.24.x；`build-apk` / `build-aab` 前置 Android SDK 检查
+- Flet 打包失败时自动注入 Gradle 阿里云镜像并重试 `flutter build apk`
+- 移除与 Flutter plugin-loader 冲突的 `~/.gradle/init.gradle`
+- `lxml` 升级至 5.3.0；`pyproject.toml` 增加 `file_picker` 8.1.4 覆盖以兼容 Flet 0.25 + Flutter 3.24
+
 ## [0.12.0] - 2026-05-24
 
 ### Changed
