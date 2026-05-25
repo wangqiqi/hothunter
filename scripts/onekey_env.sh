@@ -4,6 +4,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
+# shellcheck source=scripts/pinned_build_env.sh
+source "$ROOT_DIR/scripts/pinned_build_env.sh"
 
 VENV_DIR="$ROOT_DIR/.venv"
 REQ_FILE="$ROOT_DIR/requirements.txt"
@@ -37,9 +39,11 @@ usage() {
   sync         在已有 .venv 上同步 requirements.txt
   upgrade      升级 pip 与已安装包
   install-android-sdk  安装 Android SDK（build-apk 必需，默认 ~/Android/Sdk）
+  install-jdk          检测系统 JDK 或下载 Temurin 17 到 .runtime（Gradle 用）
   doctor       完整环境诊断（check + 构建工具提示）
   freeze       输出当前环境 pip freeze
   clean        仅删除虚拟环境 .venv
+  clear        清理多余 Android SDK / Gradle 缓存 / 构建残留，并规范 ~/.bashrc（可选 sudo）
   help         显示本帮助
 
 环境变量:
@@ -235,15 +239,33 @@ check_optional_tools() {
     echo -e "${BOLD}[可选 · 打包/安装]${NC}"
     ensure_flutter_in_path || true
     if command -v flutter >/dev/null 2>&1; then
-        ok "  Flutter: $(flutter --version 2>/dev/null | head -1)"
+        local fv
+        fv="$(flutter --version 2>/dev/null | head -1)"
+        ok "  Flutter: $fv"
+        if [[ "$fv" != *"3.24."* ]]; then
+            warn "  Flutter 应为 3.24.x（当前 PATH 可能为 stable）；打包请用: $HH_FLUTTER_HOME"
+        elif [[ -x "$HH_FLUTTER_HOME/bin/flutter" ]]; then
+            ok "  锁定 SDK: $HH_FLUTTER_HOME"
+        fi
     else
         warn "  Flutter: 未安装（build-apk 必需）"
         flutter_install_hint | sed 's/^/    /'
     fi
     if command -v java >/dev/null 2>&1; then
-        ok "  Java: $(java -version 2>&1 | head -1)"
+        ok "  Java (PATH): $(java -version 2>&1 | head -1)"
+        if command -v javac >/dev/null 2>&1; then
+            ok "  javac (PATH): $(javac -version 2>&1)"
+        else
+            warn "  javac: 未在 PATH（Gradle 需要完整 JDK，不是 ecj）"
+        fi
+        local gh
+        if gh="$(gradle_java_home 2>/dev/null || true)"; then
+            ok "  Gradle 推荐 JAVA_HOME: $gh"
+        else
+            warn "  Gradle JDK: 未找到 Java 21/17（建议: sudo apt install openjdk-21-jdk）"
+        fi
     else
-        warn "  Java: 未安装（build-apk 时 Flet 会自动下载 JDK 17）"
+        warn "  Java: 未安装（build-apk 需要 JDK 17+）"
     fi
   local android_home="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}}"
     if [[ -d "$android_home/platforms" ]]; then
@@ -305,7 +327,7 @@ cmd_install() {
     info "安装开发依赖 (pytest)..."
     "$py" -m pip install pytest
     info "安装 Flet 完整工具链 (打包用)..."
-    "$py" -m pip install "flet[all]==0.25.0" 2>/dev/null || "$py" -m pip install "flet==0.25.0"
+    "$py" -m pip install "flet[all]==${HH_FLET_VERSION}" 2>/dev/null || "$py" -m pip install "flet==${HH_FLET_VERSION}"
     ok "安装完成: $($py --version), flet $($py -m flet --version 2>/dev/null | head -1 || echo unknown)"
     warn "首次 build-apk 会下载 JDK / Android SDK，请用 onekey_start.sh build-apk"
     echo
@@ -344,6 +366,54 @@ cmd_upgrade() {
     cmd_check || true
 }
 
+gradle_java_home() {
+    local d
+    for d in \
+        "${JAVA_HOME:-}" \
+        "$HH_JAVA_HOME" \
+        "/usr/lib/jvm/java-21-openjdk-amd64" \
+        "/usr/lib/jvm/java-1.21.0-openjdk-amd64" \
+        "/usr/lib/jvm/java-17-openjdk-amd64" \
+        "/usr/lib/jvm/java-1.17.0-openjdk-amd64"; do
+        [[ -n "$d" && -x "$d/bin/javac" ]] || continue
+        echo "$d"
+        return 0
+    done
+    return 1
+}
+
+cmd_install_jdk() {
+    local sys
+    if sys="$(gradle_java_home)"; then
+        ok "系统已有 JDK，Gradle 建议使用: $sys"
+        echo "  export JAVA_HOME=\"$sys\""
+        echo "  export PATH=\"\$JAVA_HOME/bin:\$PATH\""
+        "$sys/bin/javac" -version 2>&1 | sed 's/^/  /'
+        return 0
+    fi
+    local jdk_dir="$ROOT_DIR/.runtime/jdk-17"
+    if [[ -x "$jdk_dir/bin/javac" ]]; then
+        ok "JDK 已存在: $jdk_dir"
+        echo "  export JAVA_HOME=\"$jdk_dir\""
+        echo "  export PATH=\"\$JAVA_HOME/bin:\$PATH\""
+        return 0
+    fi
+    mkdir -p "$ROOT_DIR/.runtime"
+    local tar="$ROOT_DIR/.runtime/temurin-jdk17.tar.gz"
+    info "下载 Temurin JDK 17 → $jdk_dir"
+    curl -fsSL -o "$tar" \
+        "https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse?project=jdk"
+    local top
+    top="$(tar -tzf "$tar" | sed -n '1{s#/.*##;p;q}')"
+    rm -rf "$jdk_dir"
+    tar -xzf "$tar" -C "$ROOT_DIR/.runtime"
+    mv "$ROOT_DIR/.runtime/$top" "$jdk_dir"
+    rm -f "$tar"
+    ok "JDK 就绪: $jdk_dir"
+    echo "  export JAVA_HOME=\"$jdk_dir\""
+    echo "  export PATH=\"\$JAVA_HOME/bin:\$PATH\""
+}
+
 cmd_install_android_sdk() {
     local sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}}"
     info "安装 Android SDK → $sdk_root"
@@ -365,9 +435,13 @@ cmd_install_android_sdk() {
     export ANDROID_HOME="$sdk_root"
     export ANDROID_SDK_ROOT="$sdk_root"
     export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
-    info "下载 platform-tools / build-tools / android-34 ..."
+    info "下载 platform-tools / build-tools / android-${HH_ANDROID_COMPILE_SDK:-35} ..."
     yes | sdkmanager --sdk_root="$sdk_root" \
-        "platform-tools" "platforms;android-34" "build-tools;34.0.0" "cmdline-tools;latest" \
+        "platform-tools" \
+        "platforms;android-${HH_ANDROID_COMPILE_SDK:-35}" \
+        "build-tools;${HH_ANDROID_BUILD_TOOLS:-35.0.0}" \
+        "cmdline-tools;latest" \
+        "ndk;25.1.8937393" \
         || warn "sdkmanager 部分包可能已安装，继续..."
     if command -v flutter >/dev/null 2>&1; then
         info "接受 Android 许可 (flutter doctor --android-licenses)..."
@@ -416,6 +490,136 @@ cmd_freeze() {
     "$VENV_DIR/bin/python" -m pip freeze
 }
 
+# 规范 ~/.bashrc 中的 hothunter 构建环境变量（幂等）
+ensure_bashrc_build_env() {
+    local bashrc="$HOME/.bashrc"
+    local marker="# hothunter build env"
+    [[ -f "$bashrc" ]] || touch "$bashrc"
+    if grep -qF 'flutter/stable' "$bashrc" 2>/dev/null; then
+        sed -i '/flutter\/stable/d' "$bashrc"
+        ok "  已从 ~/.bashrc 移除 flutter/stable 路径"
+    fi
+    if grep -qF "$marker" "$bashrc" 2>/dev/null; then
+        ok "  ~/.bashrc 已含 hothunter 构建变量块"
+        return 0
+    fi
+    cat >>"$bashrc" <<'EOF'
+
+# hothunter build env (onekey_env.sh clear)
+export ANDROID_SDK_ROOT="${ANDROID_HOME:-$HOME/Android/Sdk}"
+export JAVA_HOME="/usr/lib/jvm/java-21-openjdk-amd64"
+export HH_FLUTTER_HOME="$HOME/flutter/3.24.5"
+_prepend_path "$JAVA_HOME/bin"
+EOF
+    ok "  已写入 ~/.bashrc: JAVA_HOME / ANDROID_SDK_ROOT / HH_FLUTTER_HOME"
+}
+
+cmd_clear() {
+    local skip_build=false
+    local do_apt=false
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --no-build) skip_build=true ;;
+            --with-apt) do_apt=true ;;
+            -h|--help)
+                echo "用法: ./scripts/onekey_env.sh clear [--no-build] [--with-apt]"
+                echo "  --no-build  保留 build/flutter/build/"
+                echo "  --with-apt  sudo 卸载 openjdk-21-demo/source（需密码）"
+                return 0
+                ;;
+        esac
+        shift
+    done
+
+    echo -e "${BOLD}=== 清理多余构建环境 (clear) ===${NC}"
+    local sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}}"
+    local ndk_ver="${HH_NDK_VERSION:-25.1.8937393}"
+    local compile_sdk="${HH_ANDROID_COMPILE_SDK:-35}"
+    local build_tools="${HH_ANDROID_BUILD_TOOLS:-35.0.0}"
+
+    ensure_bashrc_build_env
+
+    # Gradle：停 daemon，删旧版本痕迹
+    info "停止 Gradle daemon ..."
+    local gradle_bin=""
+    gradle_bin="$(find "$HOME/.gradle/wrapper/dists" -maxdepth 5 \
+        -path "*/gradle-${HH_GRADLE_VERSION:-8.3}-all/*/gradle-*/bin/gradle" -executable 2>/dev/null | head -1 || true)"
+    [[ -n "$gradle_bin" ]] && "$gradle_bin" --stop 2>/dev/null || true
+    pkill -f 'org.gradle.launcher.daemon' 2>/dev/null || true
+    for ver in 8.7 8.14; do
+        [[ -d "$HOME/.gradle/daemon/$ver" ]] && rm -rf "$HOME/.gradle/daemon/$ver" && ok "  已删 ~/.gradle/daemon/$ver"
+    done
+    [[ -d "$HOME/.gradle/kotlin-profile" ]] && rm -rf "$HOME/.gradle/kotlin-profile" && ok "  已删 ~/.gradle/kotlin-profile"
+    [[ -d "$HOME/.gradle/.tmp" ]] && rm -rf "$HOME/.gradle/.tmp" && ok "  已删 ~/.gradle/.tmp"
+
+    # Android SDK：补装锁定版本，再删多余
+    if [[ -x "$sdk_root/cmdline-tools/latest/bin/sdkmanager" ]]; then
+        export ANDROID_HOME="$sdk_root" ANDROID_SDK_ROOT="$sdk_root"
+        export PATH="$sdk_root/cmdline-tools/latest/bin:$sdk_root/platform-tools:$PATH"
+        info "确保 Android build-tools;${build_tools} ..."
+        yes | sdkmanager --sdk_root="$sdk_root" \
+            "build-tools;${build_tools}" \
+            "platforms;android-${compile_sdk}" \
+            "ndk;${ndk_ver}" 2>/dev/null \
+            || warn "  sdkmanager 部分包可能已存在，继续..."
+    else
+        warn "  未找到 sdkmanager，跳过安装；可稍后: ./scripts/onekey_env.sh install-android-sdk"
+    fi
+
+    local p removed=0
+    for p in \
+        "$sdk_root/ndk/27.0.12077973" \
+        "$sdk_root/platforms/android-31" \
+        "$sdk_root/platforms/android-33" \
+        "$sdk_root/platforms/android-34" \
+        "$sdk_root/platforms/android-36" \
+        "$sdk_root/build-tools/33.0.1" \
+        "$sdk_root/build-tools/34.0.0"; do
+        if [[ -e "$p" ]]; then
+            rm -rf "$p"
+            ok "  已删 $(basename "$(dirname "$p")")/$(basename "$p")"
+            removed=$((removed + 1))
+        fi
+    done
+    [[ "$removed" -eq 0 ]] && info "  Android SDK 无多余目录需删"
+
+    # 项目 .runtime 残留
+    for p in \
+        "$ROOT_DIR/.runtime/temurin-jdk17.tar.gz" \
+        "$ROOT_DIR/.runtime/build-apk.log" \
+        "$ROOT_DIR/.runtime/build-apk-latest.log"; do
+        [[ -f "$p" ]] && rm -f "$p" && ok "  已删 .runtime/$(basename "$p")"
+    done
+
+    if [[ "$skip_build" == false ]]; then
+        if [[ -d "$ROOT_DIR/build/flutter/build" ]]; then
+            rm -rf "$ROOT_DIR/build/flutter/build"
+            ok "  已删 build/flutter/build/"
+        fi
+        if [[ -f "$ROOT_DIR/.runtime/apk_prepare.stamp" ]]; then
+            rm -f "$ROOT_DIR/.runtime/apk_prepare.stamp"
+            warn "  已删 apk_prepare.stamp → 下次需 prepare-apk"
+        fi
+    else
+        info "  保留 build/flutter/build/（--no-build）"
+    fi
+
+    if [[ "$do_apt" == true ]]; then
+        info "APT 精简 JDK 演示/源码包（需 sudo）..."
+        sudo DEBIAN_FRONTEND=noninteractive apt-get remove -y --purge \
+            openjdk-21-demo openjdk-21-source 2>/dev/null || warn "  apt 跳过或失败"
+        sudo apt-get autoremove -y 2>/dev/null || true
+    fi
+
+    echo
+    ok "clear 完成。建议: source ~/.bashrc && ./scripts/onekey_start.sh check-apk"
+    if [[ -d "$sdk_root/build-tools/${build_tools}" ]]; then
+        ok "  build-tools/${build_tools} 已就绪"
+    else
+        warn "  缺少 build-tools/${build_tools}，请: ./scripts/onekey_env.sh install-android-sdk"
+    fi
+}
+
 cmd_clean() {
     if [[ -d "$VENV_DIR" ]]; then
         info "删除 $VENV_DIR"
@@ -438,10 +642,11 @@ interactive_menu() {
         echo " 6) doctor     完整诊断"
         echo " 7) freeze     列出已装版本"
         echo " 8) clean      删除 .venv"
-        echo " 9) help       帮助"
+        echo " 9) clear      清理多余 SDK/Gradle/构建缓存"
+        echo "10) help       帮助"
         echo " 0) exit       退出"
         echo
-        read -r -p "请选择 [0-9]: " choice
+        read -r -p "请选择 [0-10]: " choice
         case "$choice" in
             1|check)      cmd_check || true ;;
             2|install)    cmd_install ;;
@@ -451,7 +656,8 @@ interactive_menu() {
             6|doctor)     cmd_doctor ;;
             7|freeze)     cmd_freeze ;;
             8|clean)      cmd_clean ;;
-            9|help|h)     usage ;;
+            9|clear)      cmd_clear ;;
+            10|help|h)    usage ;;
             0|exit|q)     ok "再见"; break ;;
             *)            warn "无效选项: $choice" ;;
         esac
@@ -471,9 +677,11 @@ main() {
         upgrade)      cmd_upgrade ;;
         reinstall)    cmd_reinstall ;;
         install-android-sdk) cmd_install_android_sdk ;;
+        install-jdk)        cmd_install_jdk ;;
         doctor)       cmd_doctor ;;
         freeze)       cmd_freeze ;;
         clean)        cmd_clean ;;
+        clear)        cmd_clear "${@:2}" ;;
         help|-h|--help) usage ;;
         *)
             err "未知命令: $cmd"

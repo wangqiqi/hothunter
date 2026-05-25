@@ -40,7 +40,7 @@ iOS 风格移动端 UI（430px 手机壳）：**浅色 / 深色**一键切换（
 
 - Python **3.10+**
 - Linux / macOS / Windows（开发）；Android（APK 运行）
-- 打包 APK 时首次会自动拉取 JDK 17、Android SDK（耗时较长）
+- 打包 APK 需 **Flutter 3.24.5**、**JDK 21**、Android SDK（见 [docs/BUILD_ENV.md](docs/BUILD_ENV.md)）
 
 ### 1. 克隆与安装
 
@@ -64,7 +64,14 @@ chmod +x scripts/onekey_env.sh scripts/onekey_start.sh
 
 ### 3. 打包安装到手机（推荐国内分发）
 
-**前置**：系统需安装 [Flutter SDK](https://docs.flutter.dev/get-started/install/linux)（>= 3.24，与 Flet 0.25 配套），并加入 `PATH`。可用 `./scripts/onekey_env.sh check` 查看是否就绪。
+**前置**：安装 **Flutter 3.24.5**（不要用 `stable` 3.27+）、**OpenJDK 21**、Android SDK。版本矩阵见 [docs/BUILD_ENV.md](docs/BUILD_ENV.md)。`./scripts/onekey_env.sh check` 可检查是否就绪。
+
+```bash
+# 推荐 Flutter 路径（与脚本锁定一致）
+git clone -b 3.24.5 --depth 1 https://github.com/flutter/flutter.git ~/flutter/3.24.5
+~/flutter/3.24.5/bin/flutter doctor
+sudo apt install openjdk-21-jdk   # 完整 JDK，非 ecj / 非仅 JRE
+```
 
 ```bash
 ./scripts/onekey_start.sh build-apk      # 产物 → dist/apk/

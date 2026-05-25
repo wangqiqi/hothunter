@@ -1,11 +1,11 @@
 [project]
 name = "hothunter"
-version = "0.13.0"
+version = "0.14.0"
 description = "纯本地移动端热点抓取与分析工具"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "flet==0.25.0",
+    "flet==0.25.2",
     "requests==2.32.3",
     "beautifulsoup4==4.12.3",
     "fake-useragent==1.5.1",
@@ -17,6 +17,11 @@ org = "dev.hothunter"
 product = "热点猎手"
 company = "Hotspot Hunter"
 copyright = "Copyright (C) 2026 Hotspot Hunter"
+
+# 本地模板，避免 flet build 每次 git clone GitHub 失败并清空 build/flutter
+[tool.flet.template]
+url = ".runtime/flet-build-template"
+ref = "0.25.0"
 
 [tool.flet.app]
 module = "hotspot_app"
@@ -43,6 +48,10 @@ adaptive_icon_background = "#0A84FF"
 "android.permission.INTERNET" = true
 "android.permission.ACCESS_NETWORK_STATE" = true
 
-# Flet 0.25.x 打包需 Flutter 3.24.x；file_picker 版本与新版 Flutter 兼容
+# Flet 0.25.x 打包需 Flutter 3.24.5；勿升级 stable/3.27+（见 docs/BUILD_ENV.md）
+[tool.flet.flutter.pubspec.dependencies]
+serious_python = "0.8.2"
+
 [tool.flet.flutter.pubspec.dependency_overrides]
+flet = "0.25.2"
 file_picker = "8.1.4"

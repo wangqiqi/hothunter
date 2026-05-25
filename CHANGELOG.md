@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-05-25
+
+### Added
+
+- `scripts/pinned_build_env.sh`：锁定 Flet / Flutter / AGP / Gradle / JDK 版本
+- `docs/BUILD_ENV.md`：Android 打包环境矩阵与排错说明
+- `prepare-apk` / `check-apk`：构建前环境检查与依赖预下载；`build-apk` 改为仅编译（需 prepare 戳记）
+- 本地 Flet 模板 `.runtime/flet-build-template`，避免 GitHub 克隆失败清空 `build/flutter`
+- `onekey_env.sh clear`：清理多余 Android SDK / Gradle 缓存 / 构建残留，并规范 `~/.bashrc` 构建变量
+
+### Changed
+
+- Python/Flet 固定为 **0.25.2**；`pyproject.toml` 增加 `serious_python`、`flet`、`file_picker` pubspec 覆盖
+- Android **compileSdk 35**；SDK 安装目标为 `platforms;android-35`
+- Android 构建链：**Flutter 3.24.5** + AGP 8.1.0 + Gradle 8.3 + Kotlin 1.8.22 + **JDK 21**
+- Gradle 仓库仅走阿里云镜像（移除 `google()`/`mavenCentral()` 直连，避免 dl.google.com TLS/403）
+- `onekey_env.sh`：`install-android-sdk` 安装 NDK 与 API 35；`clear` 保留锁定 SDK 仅删多余组件
+
 ## [0.13.0] - 2026-05-25
 
 ### Added
