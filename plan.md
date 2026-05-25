@@ -1,7 +1,7 @@
 # 热点猎手 (Hotspot Hunter) 项目计划
 
 **日期**: 2026-05-24  
-**当前版本**: v0.14.0  
+**当前版本**: v0.15.0  
 **阶段**: Phase 7 — 健壮性 / 边界值 / 异常处理  
 **Android 构建链（已锁定）**: 见 `docs/BUILD_ENV.md` — Flet 0.25.2 + Flutter 3.24.5 + AGP 8.1.0 + Gradle 8.3 + JDK 21
 

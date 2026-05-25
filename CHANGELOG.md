@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-05-25
+
+### Changed
+
+- `docs/prototype/index.html`：按 Flet 实际界面重写静态原型（iOS 主题、实时流/定制模式、12 平台、分组列表、底栏与阅读层示意）
+- `scripts/onekey_env.sh`：`clear` 与 `~/.bashrc` 使用 `ANDROID_BASE` / `GRADLE_USER_HOME`（默认 `~/Android/.gradle`），与锁定构建环境一致
+
 ## [0.14.0] - 2026-05-25
 
 ### Added

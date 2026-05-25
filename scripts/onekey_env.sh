@@ -506,7 +506,9 @@ ensure_bashrc_build_env() {
     cat >>"$bashrc" <<'EOF'
 
 # hothunter build env (onekey_env.sh clear)
-export ANDROID_SDK_ROOT="${ANDROID_HOME:-$HOME/Android/Sdk}"
+export ANDROID_BASE="${ANDROID_BASE:-$HOME/Android}"
+export ANDROID_SDK_ROOT="${ANDROID_HOME:-$ANDROID_BASE/Sdk}"
+export GRADLE_USER_HOME="${GRADLE_USER_HOME:-$ANDROID_BASE/.gradle}"
 export JAVA_HOME="/usr/lib/jvm/java-21-openjdk-amd64"
 export HH_FLUTTER_HOME="$HOME/flutter/3.24.5"
 _prepend_path "$JAVA_HOME/bin"
@@ -539,18 +541,19 @@ cmd_clear() {
 
     ensure_bashrc_build_env
 
-    # Gradle：停 daemon，删旧版本痕迹
-    info "停止 Gradle daemon ..."
+    # Gradle：停 daemon，删旧版本痕迹（GRADLE_USER_HOME 默认 ~/Android/.gradle）
+    local gradle_home="${GRADLE_USER_HOME:-${ANDROID_BASE:-$HOME/Android}/.gradle}"
+    info "停止 Gradle daemon ($gradle_home) ..."
     local gradle_bin=""
-    gradle_bin="$(find "$HOME/.gradle/wrapper/dists" -maxdepth 5 \
+    gradle_bin="$(find "$gradle_home/wrapper/dists" -maxdepth 5 \
         -path "*/gradle-${HH_GRADLE_VERSION:-8.3}-all/*/gradle-*/bin/gradle" -executable 2>/dev/null | head -1 || true)"
     [[ -n "$gradle_bin" ]] && "$gradle_bin" --stop 2>/dev/null || true
     pkill -f 'org.gradle.launcher.daemon' 2>/dev/null || true
     for ver in 8.7 8.14; do
-        [[ -d "$HOME/.gradle/daemon/$ver" ]] && rm -rf "$HOME/.gradle/daemon/$ver" && ok "  已删 ~/.gradle/daemon/$ver"
+        [[ -d "$gradle_home/daemon/$ver" ]] && rm -rf "$gradle_home/daemon/$ver" && ok "  已删 $gradle_home/daemon/$ver"
     done
-    [[ -d "$HOME/.gradle/kotlin-profile" ]] && rm -rf "$HOME/.gradle/kotlin-profile" && ok "  已删 ~/.gradle/kotlin-profile"
-    [[ -d "$HOME/.gradle/.tmp" ]] && rm -rf "$HOME/.gradle/.tmp" && ok "  已删 ~/.gradle/.tmp"
+    [[ -d "$gradle_home/kotlin-profile" ]] && rm -rf "$gradle_home/kotlin-profile" && ok "  已删 $gradle_home/kotlin-profile"
+    [[ -d "$gradle_home/.tmp" ]] && rm -rf "$gradle_home/.tmp" && ok "  已删 $gradle_home/.tmp"
 
     # Android SDK：补装锁定版本，再删多余
     if [[ -x "$sdk_root/cmdline-tools/latest/bin/sdkmanager" ]]; then

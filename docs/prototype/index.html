@@ -1,1883 +1,786 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>热点猎手</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>热点猎手 · 界面原型</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        :root, [data-theme="dark"] {
+            --primary: #0A84FF;
+            --primary-light: #409CFF;
+            --primary-tint: #0A84FF18;
+            --bg-primary: #000000;
+            --bg-secondary: #1C1C1E;
+            --bg-card: #2C2C2E;
+            --text-primary: #FFFFFF;
+            --text-secondary: #98989D;
+            --text-muted: #636366;
+            --separator: #38383A;
+            --success: #30D158;
+            --warning: #FF9F0A;
+            --on-primary: #FFFFFF;
+            --shadow: #00000066;
+            --tag-1-bg: #0A84FF33; --tag-1-fg: #64B5FF;
+            --tag-2-bg: #5E5CE633; --tag-2-fg: #9B99F5;
+            --tag-3-bg: #BF5AF233; --tag-3-fg: #D9A3FF;
+            --tag-4-bg: #FF375F33; --tag-4-fg: #FF8DAF;
+            --tag-5-bg: #30D15833; --tag-5-fg: #6EE7A0;
         }
 
-        :root {
-            --primary: #6366f1;
-            --primary-light: #818cf8;
-            --primary-dark: #4f46e5;
-            --bg-primary: #0f172a;
-            --bg-secondary: #1e293b;
-            --bg-card: #334155;
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --border: #475569;
+        [data-theme="light"] {
+            --primary: #007AFF;
+            --primary-light: #007AFF;
+            --primary-tint: #007AFF1A;
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F2F2F7;
+            --bg-card: #FFFFFF;
+            --text-primary: #000000;
+            --text-secondary: #3C3C43;
+            --text-muted: #8E8E93;
+            --separator: #C6C6C8;
+            --success: #34C759;
+            --warning: #FF9500;
+            --on-primary: #FFFFFF;
+            --shadow: #0000001A;
+            --tag-1-bg: #007AFF26; --tag-1-fg: #005EB8;
+            --tag-2-bg: #5856D626; --tag-2-fg: #3634A3;
+            --tag-3-bg: #AF52DE26; --tag-3-fg: #8944AB;
+            --tag-4-bg: #FF2D5526; --tag-4-fg: #C41E3A;
+            --tag-5-bg: #34C75926; --tag-5-fg: #248A3D;
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg-primary);
+            font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+            background: #111;
             color: var(--text-primary);
             min-height: 100vh;
-            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
         }
 
-        /* App Container */
-        .app-container {
+        .phone {
+            width: 100%;
             max-width: 430px;
-            margin: 0 auto;
             min-height: 100vh;
+            background: var(--bg-primary);
+            border-left: 0.5px solid var(--separator);
+            border-right: 0.5px solid var(--separator);
             position: relative;
-            background: linear-gradient(180deg, var(--bg-primary) 0%, #1a1f35 100%);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .scroll {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-bottom: 76px;
         }
 
         /* Header */
         .header {
-            padding: 20px 20px 16px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            border-radius: 0 0 24px 24px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 200px;
-            height: 200px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 50%;
-        }
-
-        .header::after {
-            content: '';
-            position: absolute;
-            bottom: -30%;
-            left: -10%;
-            width: 150px;
-            height: 150px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 50%;
-        }
-
-        .app-title {
-            font-size: 26px;
-            font-weight: 700;
-            color: #fff;
+            padding: 12px 16px 8px;
+            border-bottom: 0.5px solid var(--separator);
             display: flex;
             align-items: center;
-            gap: 10px;
-            position: relative;
-            z-index: 1;
+            gap: 8px;
         }
-
-        .app-title svg {
-            width: 32px;
-            height: 32px;
+        .header-text { flex: 1; }
+        .header h1 { font-size: 28px; font-weight: 700; line-height: 1.2; }
+        .header .subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+        .icon-btn {
+            width: 40px; height: 40px; border: none; background: transparent;
+            color: var(--primary); cursor: pointer; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
         }
+        .icon-btn svg { width: 22px; height: 22px; }
 
-        .app-subtitle {
-            font-size: 13px;
-            color: rgba(255,255,255,0.8);
-            margin-top: 4px;
-            position: relative;
-            z-index: 1;
-        }
+        .pad-h { padding-left: 16px; padding-right: 16px; }
 
-        /* Search Section */
-        .search-section {
-            padding: 20px;
-            margin-top: -12px;
-            position: relative;
-            z-index: 2;
-        }
-
-        .search-card {
+        /* Grouped card */
+        .grouped {
             background: var(--bg-secondary);
-            border-radius: 16px;
-            padding: 16px;
-            border: 1px solid var(--border);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-
-        .input-group {
-            margin-bottom: 16px;
-        }
-
-        .input-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            font-weight: 500;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .input-label svg {
-            width: 14px;
-            height: 14px;
-            opacity: 0.7;
-        }
-
-        .keyword-input {
-            width: 100%;
-            padding: 14px 16px;
-            background: var(--bg-card);
-            border: 2px solid transparent;
+            border: 0.5px solid var(--separator);
             border-radius: 12px;
-            color: var(--text-primary);
-            font-size: 16px;
-            font-weight: 500;
-            transition: all 0.3s ease;
+            padding: 10px;
+            margin-top: 6px;
         }
 
-        .keyword-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        .section-label {
+            font-size: 11px; font-weight: 600; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.04em;
+            display: flex; align-items: center; gap: 4px; margin-bottom: 6px;
+        }
+        .section-label svg { width: 12px; height: 12px; opacity: 0.7; }
+
+        /* Segmented control */
+        .segmented {
+            display: flex; background: var(--bg-card); border-radius: 8px;
+            padding: 2px; gap: 2px; margin-bottom: 8px;
+        }
+        .segmented button {
+            flex: 1; border: none; background: transparent; color: var(--text-secondary);
+            font-size: 14px; padding: 10px 14px; border-radius: 6px; cursor: pointer;
+            font-weight: 500; transition: 0.2s;
+        }
+        .segmented button.active {
+            background: var(--primary); color: var(--on-primary); font-weight: 600;
         }
 
-        .keyword-input::placeholder {
-            color: var(--text-muted);
+        .hint { font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; line-height: 1.45; }
+
+        .field-label { font-size: 11px; font-weight: 600; color: var(--text-muted);
+            text-transform: uppercase; margin: 8px 0 6px; display: flex; gap: 4px; align-items: center; }
+
+        .text-input {
+            width: 100%; padding: 10px 12px; font-size: 15px;
+            background: var(--bg-card); color: var(--text-primary);
+            border: 2px solid transparent; border-radius: 10px;
         }
+        .text-input:focus { outline: none; border-color: var(--primary); }
+        .text-input.hidden { display: none; }
 
-        /* Platform Selection */
-        .platform-section {
-            margin-top: 16px;
+        /* Collapsible platform */
+        .collapse-header {
+            display: flex; align-items: center; gap: 4px; cursor: pointer;
+            padding: 4px 0; font-size: 13px; font-weight: 600; color: var(--text-muted);
         }
-
-        .platform-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 8px;
+        .collapse-header .summary { flex: 1; text-align: right; font-weight: 400;
+            color: var(--text-secondary); font-size: 12px; }
+        .platform-grid { display: none; margin-top: 8px; }
+        .platform-grid.open { display: block; }
+        .platform-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .platform-chip {
+            flex: 1; display: flex; align-items: center; gap: 6px;
+            padding: 8px 10px; border-radius: 10px; background: var(--bg-card);
+            border: 1px solid var(--separator); cursor: pointer; min-width: 0;
+            transition: 0.2s;
         }
-
-        .platform-item {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-            position: relative;
-            overflow: hidden;
+        .platform-chip.selected {
+            background: var(--primary-tint); border-color: var(--primary);
         }
-
-        .platform-item:hover {
-            background: #3d4a5c;
+        .platform-chip.dimmed { opacity: 0.45; }
+        .chip-check {
+            width: 18px; height: 18px; border-radius: 5px;
+            border: 1.5px solid var(--text-muted); flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
         }
-
-        .platform-item.selected {
-            border-color: var(--primary);
-            background: rgba(99, 102, 241, 0.1);
+        .platform-chip.selected .chip-check {
+            background: var(--primary); border-color: var(--primary);
         }
-
-        .platform-checkbox {
-            width: 22px;
-            height: 22px;
-            border-radius: 6px;
-            border: 2px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            flex-shrink: 0;
+        .chip-check svg { width: 12px; height: 12px; color: var(--on-primary); display: none; }
+        .platform-chip.selected .chip-check svg { display: block; }
+        .chip-icon {
+            width: 24px; height: 24px; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 600; color: #fff; flex-shrink: 0;
         }
+        .chip-info { min-width: 0; flex: 1; }
+        .chip-name { font-size: 13px; font-weight: 500; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis; }
+        .chip-sub { font-size: 10px; color: var(--text-muted); }
+        .chip-sub.warn { color: var(--warning); }
 
-        .platform-item.selected .platform-checkbox {
-            background: var(--primary);
-            border-color: var(--primary);
+        /* Switch */
+        .switch-row {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-top: 10px; font-size: 13px; color: var(--text-secondary);
         }
-
-        .platform-checkbox svg {
-            width: 14px;
-            height: 14px;
-            opacity: 0;
-            transition: opacity 0.2s ease;
+        .switch {
+            width: 44px; height: 26px; border-radius: 13px; background: var(--separator);
+            position: relative; cursor: pointer; transition: 0.2s;
         }
-
-        .platform-item.selected .platform-checkbox svg {
-            opacity: 1;
+        .switch.on { background: var(--primary); }
+        .switch::after {
+            content: ''; position: absolute; width: 22px; height: 22px;
+            border-radius: 50%; background: #fff; top: 2px; left: 2px;
+            transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
+        .switch.on::after { left: 20px; }
+        .refresh-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 
-        .platform-icon {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: 700;
-            flex-shrink: 0;
-        }
-
-        .platform-icon.zhihu { background: #0066ff; color: #fff; }
-        .platform-icon.36kr { background: #00b369; color: #fff; }
-        .platform-icon.bilibili { background: #ff6b9d; color: #fff; }
-        .platform-icon.baidu { background: #2932e5; color: #fff; }
-
-        .platform-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .platform-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .platform-count {
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
-
-        /* Action Buttons */
-        .action-buttons {
-            display: flex;
-            gap: 12px;
-            margin-top: 20px;
-        }
-
+        .btn-row { display: flex; gap: 6px; margin-top: 10px; }
         .btn {
-            flex: 1;
-            padding: 16px 20px;
-            border-radius: 14px;
-            font-size: 15px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.3s ease;
+            flex: 1; padding: 11px 14px; border-radius: 10px; font-size: 15px;
+            font-weight: 600; border: none; cursor: pointer; text-align: center;
         }
-
-        .btn svg {
-            width: 20px;
-            height: 20px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: #fff;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
-        }
-
-        .btn-primary:active {
-            transform: translateY(0);
-        }
-
-        .btn-primary.loading {
-            opacity: 0.7;
-            pointer-events: none;
-        }
-
-        .btn-primary.loading .btn-text {
-            display: none;
-        }
-
-        .btn-primary.loading .btn-loading {
-            display: flex;
-        }
-
-        .btn-loading {
-            display: none;
-            gap: 4px;
-        }
-
-        .btn-loading span {
-            width: 8px;
-            height: 8px;
-            background: #fff;
-            border-radius: 50%;
-            animation: bounce 1.4s infinite ease-in-out both;
-        }
-
-        .btn-loading span:nth-child(1) { animation-delay: -0.32s; }
-        .btn-loading span:nth-child(2) { animation-delay: -0.16s; }
-
-        @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1); }
-        }
-
+        .btn-primary { background: var(--primary); color: var(--on-primary); }
         .btn-secondary {
-            background: var(--bg-card);
-            color: var(--text-primary);
-            border: 2px solid var(--border);
+            background: var(--bg-card); color: var(--text-primary);
+            border: 0.5px solid var(--separator); font-weight: 500;
         }
+        .btn.loading { opacity: 0.7; pointer-events: none; }
 
-        .btn-secondary:hover {
-            background: #3d4a5c;
-            border-color: var(--text-muted);
-        }
-
-        /* Status Bar */
+        /* Status */
         .status-bar {
-            padding: 0 20px;
-            margin-top: 16px;
+            margin: 10px 16px; padding: 10px 12px;
+            display: flex; align-items: center; gap: 6px;
         }
+        .status-dot { width: 8px; height: 8px; border-radius: 4px;
+            background: var(--text-muted); flex-shrink: 0; }
+        .status-dot.active { background: var(--success); }
+        .status-msg { flex: 1; font-size: 13px; color: var(--text-secondary); }
+        .status-count { font-size: 13px; font-weight: 500; color: var(--primary-light); }
 
-        .status-card {
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 14px 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border: 1px solid var(--border);
+        /* Results */
+        .block { padding: 6px 16px; }
+        .results-head { margin-bottom: 6px; }
+        .results-title-row {
+            display: flex; justify-content: space-between; align-items: baseline;
         }
-
-        .status-indicator {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--text-muted);
-            flex-shrink: 0;
+        .results-title { font-size: 17px; font-weight: 600; }
+        .results-count { font-size: 13px; color: var(--text-muted); }
+        .toolbar {
+            display: flex; gap: 6px; margin-top: 6px; align-items: center;
         }
-
-        .status-indicator.active {
-            background: var(--success);
-            box-shadow: 0 0 10px var(--success);
-            animation: pulse 2s infinite;
+        .toolbar select, .toolbar input {
+            font-size: 12px; padding: 4px 6px; border-radius: 8px;
+            background: var(--bg-card); color: var(--text-primary);
+            border: 0.5px solid var(--separator);
         }
+        .toolbar select { width: 112px; }
+        .toolbar .filter-input { flex: 2; min-width: 0; padding: 8px 10px; font-size: 13px; }
+        .toolbar .platform-select { width: 76px; }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        /* Article list (grouped) */
+        .article-group { overflow: hidden; }
+        .article-row {
+            display: flex; align-items: center; gap: 6px;
+            padding: 10px 12px; cursor: pointer;
         }
-
-        .status-text {
-            flex: 1;
-            font-size: 13px;
-            color: var(--text-secondary);
+        .article-row:active { background: var(--primary-tint); }
+        .badge {
+            font-size: 10px; font-weight: 600; padding: 2px 6px;
+            border-radius: 6px; flex-shrink: 0;
         }
-
-        .status-count {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--primary-light);
-        }
-
-        /* Results Section */
-        .results-section {
-            padding: 20px;
-            margin-top: 8px;
-        }
-
-        .section-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
-        }
-
-        .section-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .section-title svg {
-            width: 22px;
-            height: 22px;
-            color: var(--primary-light);
-        }
-
-        .section-count {
-            font-size: 12px;
-            color: var(--text-muted);
-            background: var(--bg-card);
-            padding: 4px 10px;
-            border-radius: 20px;
-        }
-
-        /* Article Card */
-        .article-card {
-            background: var(--bg-secondary);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 12px;
-            border: 1px solid var(--border);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .article-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            border-color: var(--primary);
-        }
-
-        .article-header {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-
-        .article-platform-badge {
-            padding: 4px 10px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: 600;
-            flex-shrink: 0;
-        }
-
-        .article-platform-badge.zhihu { background: rgba(0, 102, 255, 0.2); color: #4d9fff; }
-        .article-platform-badge.36kr { background: rgba(0, 179, 105, 0.2); color: #34c97a; }
-        .article-platform-badge.bilibili { background: rgba(255, 107, 157, 0.2); color: #ff8db5; }
-        .article-platform-badge.baidu { background: rgba(41, 50, 229, 0.2); color: #6b77ff; }
-
+        .article-body { flex: 1; min-width: 0; }
         .article-title {
-            flex: 1;
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text-primary);
-            line-height: 1.5;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
+            font-size: 15px; font-weight: 500; line-height: 1.35;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
             overflow: hidden;
         }
+        .article-meta { font-size: 12px; color: var(--text-secondary);
+            margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chevron { color: var(--text-muted); flex-shrink: 0; }
+        .divider { height: 0.5px; background: var(--separator); margin-left: 44px; }
 
-        .article-meta {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-
-        .article-stat {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .article-stat svg {
-            width: 14px;
-            height: 14px;
-            opacity: 0.7;
-        }
-
-        .article-stat.hot {
-            color: var(--warning);
-        }
-
-        .article-stat.hot svg {
-            color: var(--warning);
-            opacity: 1;
-        }
-
-        .article-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 10px 16px;
-            background: var(--bg-card);
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--primary-light);
-            transition: all 0.3s ease;
-            margin-top: 12px;
-        }
-
-        .article-link:hover {
-            background: var(--primary);
-            color: #fff;
-        }
-
-        .article-link svg {
-            width: 14px;
-            height: 14px;
-        }
-
-        /* Analysis Section */
-        .analysis-section {
-            padding: 20px;
-            margin-top: 8px;
-        }
-
-        .analysis-card {
-            background: var(--bg-secondary);
-            border-radius: 16px;
-            padding: 16px;
-            border: 1px solid var(--border);
-        }
-
-        .word-cloud {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 12px;
-        }
-
+        /* Analysis */
+        .analysis-title { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+        .word-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
         .word-tag {
-            padding: 8px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.3s ease;
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 5px 10px; border-radius: 16px; font-size: 12px; font-weight: 500;
             cursor: pointer;
         }
+        .word-tag .cnt { font-size: 11px; }
 
-        .word-tag:hover {
-            transform: scale(1.05);
-        }
-
-        .word-tag .count {
-            font-size: 11px;
-            padding: 2px 6px;
-            background: rgba(255,255,255,0.15);
-            border-radius: 10px;
-        }
-
-        .word-tag.level-1 { background: rgba(99, 102, 241, 0.3); color: #a5b4fc; }
-        .word-tag.level-2 { background: rgba(139, 92, 246, 0.3); color: #c4b5fd; }
-        .word-tag.level-3 { background: rgba(236, 72, 153, 0.3); color: #f9a8d4; }
-        .word-tag.level-4 { background: rgba(59, 130, 246, 0.3); color: #93c5fd; }
-        .word-tag.level-5 { background: rgba(16, 185, 129, 0.3); color: #6ee7b7; }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-        }
-
-        .empty-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 16px;
-            background: var(--bg-card);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .empty-icon svg {
-            width: 40px;
-            height: 40px;
-            color: var(--text-muted);
-        }
-
-        .empty-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-        }
-
-        .empty-desc {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-
-        /* Bottom Nav */
+        /* Bottom nav */
         .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 430px;
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 430px;
             background: var(--bg-secondary);
-            border-top: 1px solid var(--border);
-            padding: 12px 20px;
-            padding-bottom: calc(12px + env(safe-area-inset-bottom));
-            display: flex;
-            justify-content: space-around;
-            z-index: 100;
+            border-top: 0.5px solid var(--separator);
+            padding: 4px 8px calc(8px + env(safe-area-inset-bottom));
+            display: flex; justify-content: space-around;
+            box-shadow: 0 -2px 12px var(--shadow);
+            transition: transform 0.22s ease, opacity 0.22s ease;
+            z-index: 50;
         }
-
+        .bottom-nav.hidden {
+            transform: translateX(-50%) translateY(68px);
+            opacity: 0; pointer-events: none;
+        }
         .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            padding: 8px 16px;
-            border-radius: 12px;
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            gap: 2px; padding: 6px 8px; cursor: pointer; color: var(--text-muted);
+            border: none; background: transparent; font-family: inherit;
+        }
+        .nav-item.active { color: var(--primary); }
+        .nav-item span { font-size: 10px; }
+        .nav-item.active span { font-weight: 600; }
+        .nav-item svg { width: 22px; height: 22px; }
+
+        .back-top {
+            position: fixed; right: calc(50% - 215px + 16px);
+            bottom: 86px; width: 44px; height: 44px; border-radius: 50%;
+            background: var(--primary); border: none; color: var(--on-primary);
+            cursor: pointer; display: none; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px var(--shadow); z-index: 60;
+        }
+        @media (max-width: 430px) {
+            .back-top { right: 16px; }
+        }
+        .back-top.show { display: flex; }
+
+        /* Reader overlay */
+        .reader {
+            position: fixed; inset: 0; max-width: 430px; margin: 0 auto;
+            background: var(--bg-primary); z-index: 200;
+            display: none; flex-direction: column;
+        }
+        .reader.open { display: flex; }
+        .reader-toolbar {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 16px; border-bottom: 0.5px solid var(--separator);
+        }
+        .reader-toolbar h2 {
+            flex: 1; font-size: 16px; font-weight: 600;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .reader-meta { font-size: 12px; color: var(--text-secondary); padding: 0 16px 8px; }
+        .reader-body {
+            flex: 1; overflow-y: auto; padding: 16px;
+            font-size: 15px; line-height: 1.6; color: var(--text-primary);
         }
 
-        .nav-item:hover, .nav-item.active {
-            color: var(--primary-light);
-            background: rgba(99, 102, 241, 0.1);
-        }
-
-        .nav-item svg {
-            width: 24px;
-            height: 24px;
-        }
-
-        .nav-item span {
-            font-size: 11px;
-            font-weight: 500;
-        }
-
-        /* Toast */
         .toast {
-            position: fixed;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: var(--bg-card);
-            color: var(--text-primary);
-            padding: 14px 24px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 500;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-            opacity: 0;
-            transition: all 0.3s ease;
-            z-index: 1000;
+            position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: var(--bg-card); color: var(--text-primary);
+            padding: 12px 20px; border-radius: 10px; font-size: 14px;
+            border: 0.5px solid var(--separator); box-shadow: 0 4px 16px var(--shadow);
+            opacity: 0; transition: 0.3s; z-index: 300; pointer-events: none;
+            max-width: 90%;
         }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        .toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
+        .empty {
+            text-align: center; padding: 24px 16px; color: var(--text-muted);
         }
+        .empty svg { width: 32px; height: 32px; margin-bottom: 8px; opacity: 0.6; }
+        .empty h3 { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
 
-        .toast.success {
-            border-left: 4px solid var(--success);
+        .proto-note {
+            font-size: 10px; color: var(--text-muted); text-align: center;
+            padding: 8px 16px 24px;
         }
-
-        .toast.error {
-            border-left: 4px solid var(--danger);
-        }
-
-        /* Spacer for bottom nav */
-        .content-spacer {
-            height: 80px;
-        }
-
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .article-card {
-            animation: fadeInUp 0.4s ease forwards;
-        }
-
-        .article-card:nth-child(1) { animation-delay: 0.05s; }
-        .article-card:nth-child(2) { animation-delay: 0.1s; }
-        .article-card:nth-child(3) { animation-delay: 0.15s; }
-        .article-card:nth-child(4) { animation-delay: 0.2s; }
-        .article-card:nth-child(5) { animation-delay: 0.25s; }
-        .article-card:nth-child(6) { animation-delay: 0.3s; }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Header -->
-        <div class="header">
-            <h1 class="app-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
-                </svg>
-                热点猎手
-            </h1>
-            <p class="app-subtitle">多平台热点抓取与分析工具</p>
-        </div>
+    <div class="phone" id="phone">
+        <div class="scroll" id="scroll">
+            <header class="header">
+                <div class="header-text">
+                    <h1>热点猎手</h1>
+                    <p class="subtitle">实时流 · 定制追踪 · 整点刷新</p>
+                </div>
+                <button class="icon-btn" id="themeToggle" type="button" title="切换浅色 / 深色" aria-label="切换主题">
+                    <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+            </header>
 
-        <!-- Search Section -->
-        <div class="search-section">
-            <div class="search-card">
-                <div class="input-group">
-                    <label class="input-label">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="8"/>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                        </svg>
+            <section class="pad-h" id="section-settings">
+                <div class="grouped controls-card">
+                    <div class="section-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                        抓取模式
+                    </div>
+                    <div class="segmented" role="tablist">
+                        <button type="button" class="active" data-mode="stream">实时流</button>
+                        <button type="button" data-mode="custom">定制</button>
+                    </div>
+                    <p class="hint" id="modeHint">抓取各平台当前热榜，全量展示，无需关键词</p>
+
+                    <div class="field-label" id="kwLabel" style="display:none">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                         搜索关键词
-                    </label>
-                    <input type="text" class="keyword-input" id="keywordInput" placeholder="输入关键词，如：AI" value="AI">
-                </div>
+                    </div>
+                    <input type="text" class="text-input hidden" id="keywordInput"
+                        placeholder="输入关注的主题词，如 AI、新能源" value="AI">
 
-                <div class="platform-section">
-                    <label class="input-label">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                            <line x1="3" y1="9" x2="21" y2="9"/>
-                            <line x1="9" y1="21" x2="9" y2="9"/>
-                        </svg>
-                        选择平台
-                    </label>
-                    <div class="platform-grid">
-                        <div class="platform-item selected" data-platform="zhihu">
-                            <div class="platform-checkbox">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="20 6 9 17 4 12"/>
-                                </svg>
-                            </div>
-                            <div class="platform-icon zhihu">知</div>
-                            <div class="platform-info">
-                                <div class="platform-name">知乎热榜</div>
-                                <div class="platform-count">8 条记录</div>
-                            </div>
-                        </div>
-                        <div class="platform-item selected" data-platform="36kr">
-                            <div class="platform-checkbox">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="20 6 9 17 4 12"/>
-                                </svg>
-                            </div>
-                            <div class="platform-icon 36kr">氪</div>
-                            <div class="platform-info">
-                                <div class="platform-name">36氪</div>
-                                <div class="platform-count">5 条记录</div>
-                            </div>
-                        </div>
-                        <div class="platform-item selected" data-platform="bilibili">
-                            <div class="platform-checkbox">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="20 6 9 17 4 12"/>
-                                </svg>
-                            </div>
-                            <div class="platform-icon bilibili">B</div>
-                            <div class="platform-info">
-                                <div class="platform-name">B站热门</div>
-                                <div class="platform-count">12 条记录</div>
-                            </div>
-                        </div>
-                        <div class="platform-item selected" data-platform="baidu">
-                            <div class="platform-checkbox">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="20 6 9 17 4 12"/>
-                                </svg>
-                            </div>
-                            <div class="platform-icon baidu">度</div>
-                            <div class="platform-info">
-                                <div class="platform-name">百度新闻</div>
-                                <div class="platform-count">10 条记录</div>
-                            </div>
-                        </div>
+                    <div class="collapse-header" id="platformToggle">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
+                        <span>选择平台</span>
+                        <span class="summary" id="platformSummary">已选 12/12</span>
+                        <svg id="platformChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polyline points="9 18 15 12 9 6"/></svg>
+                    </div>
+                    <div class="platform-grid" id="platformGrid"></div>
+
+                    <div class="switch-row">
+                        <span>整点自动刷新</span>
+                        <div class="switch on" id="hourlySwitch" role="switch" aria-checked="true"></div>
+                    </div>
+                    <p class="refresh-hint" id="refreshHint">打开时自动刷新 · 下次整点 14:00</p>
+
+                    <div class="btn-row">
+                        <button type="button" class="btn btn-primary" id="fetchBtn">立即刷新</button>
+                        <button type="button" class="btn btn-secondary" id="historyBtn">历史</button>
                     </div>
                 </div>
+            </section>
 
-                <div class="action-buttons">
-                    <button class="btn btn-primary" id="fetchBtn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"/>
-                            <polyline points="12 6 12 12 16 14"/>
-                        </svg>
-                        <span class="btn-text">开始抓取</span>
-                        <div class="btn-loading">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </div>
-                    </button>
-                    <button class="btn btn-secondary" id="historyBtn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"/>
-                            <polyline points="12 6 12 12 16 14"/>
-                        </svg>
-                        历史
-                    </button>
-                </div>
+            <div class="status-bar grouped" id="statusBar">
+                <div class="status-dot" id="statusDot"></div>
+                <span class="status-msg" id="statusText">就绪 · 实时流热点</span>
+                <span class="status-count" id="statusCount"></span>
             </div>
+
+            <section class="block" id="section-hot">
+                <div class="results-head">
+                    <div class="results-title-row">
+                        <span class="results-title">热点列表</span>
+                        <span class="results-count" id="resultCount">6 条结果</span>
+                    </div>
+                    <div class="toolbar">
+                        <select id="sortSelect" title="排序">
+                            <option value="hot_desc">热度从高到低</option>
+                            <option value="hot_asc">热度从低到高</option>
+                            <option value="title">标题 A-Z</option>
+                            <option value="time_desc">抓取时间最新</option>
+                            <option value="platform">按平台分组</option>
+                        </select>
+                        <input type="text" class="filter-input" id="filterInput" placeholder="筛选标题">
+                        <select class="platform-select" id="platformFilter" title="平台">
+                            <option value="all">全部</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grouped article-group" id="articleList"></div>
+            </section>
+
+            <section class="block" id="section-analysis">
+                <h2 class="analysis-title">热点分析</h2>
+                <div class="grouped">
+                    <div class="word-wrap" id="wordCloud"></div>
+                </div>
+            </section>
+
+            <p class="proto-note">静态原型 · 对齐 Flet 应用 src/ui · 非真实数据</p>
         </div>
 
-        <!-- Status Bar -->
-        <div class="status-bar">
-            <div class="status-card">
-                <div class="status-indicator" id="statusIndicator"></div>
-                <span class="status-text" id="statusText">准备就绪</span>
-                <span class="status-count" id="statusCount">0 条</span>
-            </div>
-        </div>
-
-        <!-- Results Section -->
-        <div class="results-section">
-            <div class="section-header">
-                <h2 class="section-title">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <line x1="16" y1="13" x2="8" y2="13"/>
-                        <line x1="16" y1="17" x2="8" y2="17"/>
-                        <polyline points="10 9 9 9 8 9"/>
-                    </svg>
-                    热点列表
-                </h2>
-                <span class="section-count" id="resultCount">35 条结果</span>
-            </div>
-
-            <div id="articleList">
-                <!-- Article 1 -->
-                <div class="article-card">
-                    <div class="article-header">
-                        <span class="article-platform-badge zhihu">知乎</span>
-                        <h3 class="article-title">OpenAI 发布 GPT-5，性能全面超越 GPT-4，AGI 竞赛进入白热化阶段</h3>
-                    </div>
-                    <div class="article-meta">
-                        <div class="article-stat hot">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 23c-3.9 0-7-3.1-7-7 0-3.1 1.9-5.7 4.6-6.6-.3 1.2-.4 2.4-.4 3.6 0 2.8 2.2 5 5 5 .8 0 1.5-.1 2.2-.4C15.8 19.5 14 23 12 23z"/>
-                            </svg>
-                            3200万热度
-                        </div>
-                        <div class="article-stat">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <polyline points="12 6 12 12 16 14"/>
-                            </svg>
-                            2小时前
-                        </div>
-                    </div>
-                    <div class="article-link">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                            <polyline points="15 3 21 3 21 9"/>
-                            <line x1="10" y1="14" x2="21" y2="3"/>
-                        </svg>
-                        打开链接
-                    </div>
-                </div>
-
-                <!-- Article 2 -->
-                <div class="article-card">
-                    <div class="article-header">
-                        <span class="article-platform-badge bilibili">B站</span>
-                        <h3 class="article-title">【深度解析】为什么说 AI Agent 是下一个风口？从业者必看</h3>
-                    </div>
-                    <div class="article-meta">
-                        <div class="article-stat hot">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 23c-3.9 0-7-3.1-7-7 0-3.1 1.9-5.7 4.6-6.6-.3 1.2-.4 2.4-.4 3.6 0 2.8 2.2 5 5 5 .8 0 1.5-.1 2.2-.4C15.8 19.5 14 23 12 23z"/>
-                            </svg>
-                            156万播放
-                        </div>
-                        <div class="article-stat">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <polyline points="12 6 12 12 16 14"/>
-                            </svg>
-                            5小时前
-                        </div>
-                    </div>
-                    <div class="article-link">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                            <polyline points="15 3 21 3 21 9"/>
-                            <line x1="10" y1="14" x2="21" y2="3"/>
-                        </svg>
-                        打开链接
-                    </div>
-                </div>
-
-                <!-- Article 3 -->
-                <div class="article-card">
-                    <div class="article-header">
-                        <span class="article-platform-badge 36kr">36氪</span>
-                        <h3 class="article-title">估值 50 亿美元！AI 编程独角兽 Cursor 获新一轮融资</h3>
-                    </div>
-                    <div class="article-meta">
-                        <div class="article-stat hot">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 23c-3.9 0-7-3.1-7-7 0-3.1 1.9-5.7 4.6-6.6-.3 1.2-.4 2.4-.4 3.6 0 2.8 2.2 5 5 5 .8 0 1.5-.1 2.2-.4C15.8 19.5 14 23 12 23z"/>
-                            </svg>
-                            286万阅读
-                        </div>
-                        <div class="article-stat">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <polyline points="12 6 12 12 16 14"/>
-                            </svg>
-                            8小时前
-                        </div>
-                    </div>
-                    <div class="article-link">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                            <polyline points="15 3 21 3 21 9"/>
-                            <line x1="10" y1="14" x2="21" y2="3"/>
-                        </svg>
-                        打开链接
-                    </div>
-                </div>
-
-                <!-- Article 4 -->
-                <div class="article-card">
-                    <div class="article-header">
-                        <span class="article-platform-badge baidu">百度</span>
-                        <h3 class="article-title">百度文心大模型 4.0 正式发布，中文理解能力超越 GPT-4</h3>
-                    </div>
-                    <div class="article-meta">
-                        <div class="article-stat hot">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 23c-3.9 0-7-3.1-7-7 0-3.1 1.9-5.7 4.6-6.6-.3 1.2-.4 2.4-.4 3.6 0 2.8 2.2 5 5 5 .8 0 1.5-.1 2.2-.4C15.8 19.5 14 23 12 23z"/>
-                            </svg>
-                            452万热度
-                        </div>
-                        <div class="article-stat">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <polyline points="12 6 12 12 16 14"/>
-                            </svg>
-                            12小时前
-                        </div>
-                    </div>
-                    <div class="article-link">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                            <polyline points="15 3 21 3 21 9"/>
-                            <line x1="10" y1="14" x2="21" y2="3"/>
-                        </svg>
-                        打开链接
-                    </div>
-                </div>
-
-                <!-- Article 5 -->
-                <div class="article-card">
-                    <div class="article-header">
-                        <span class="article-platform-badge zhihu">知乎</span>
-                        <h3 class="article-title">Claude 3.5 vs GPT-4o：谁才是真正的多模态之王？</h3>
-                    </div>
-                    <div class="article-meta">
-                        <div class="article-stat hot">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 23c-3.9 0-7-3.1-7-7 0-3.1 1.9-5.7 4.6-6.6-.3 1.2-.4 2.4-.4 3.6 0 2.8 2.2 5 5 5 .8 0 1.5-.1 2.2-.4C15.8 19.5 14 23 12 23z"/>
-                            </svg>
-                            1890万热度
-                        </div>
-                        <div class="article-stat">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <polyline points="12 6 12 12 16 14"/>
-                            </svg>
-                            1天前
-                        </div>
-                    </div>
-                    <div class="article-link">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                            <polyline points="15 3 21 3 21 9"/>
-                            <line x1="10" y1="14" x2="21" y2="3"/>
-                        </svg>
-                        打开链接
-                    </div>
-                </div>
-
-                <!-- Article 6 -->
-                <div class="article-card">
-                    <div class="article-header">
-                        <span class="article-platform-badge bilibili">B站</span>
-                        <h3 class="article-title">Sora 全面开放！实测效果惊艳，这10个功能太炸裂了</h3>
-                    </div>
-                    <div class="article-meta">
-                        <div class="article-stat hot">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 23c-3.9 0-7-3.1-7-7 0-3.1 1.9-5.7 4.6-6.6-.3 1.2-.4 2.4-.4 3.6 0 2.8 2.2 5 5 5 .8 0 1.5-.1 2.2-.4C15.8 19.5 14 23 12 23z"/>
-                            </svg>
-                            289万播放
-                        </div>
-                        <div class="article-stat">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <polyline points="12 6 12 12 16 14"/>
-                            </svg>
-                            1天前
-                        </div>
-                    </div>
-                    <div class="article-link">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                            <polyline points="15 3 21 3 21 9"/>
-                            <line x1="10" y1="14" x2="21" y2="3"/>
-                        </svg>
-                        打开链接
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Analysis Section -->
-        <div class="analysis-section">
-            <div class="section-header">
-                <h2 class="section-title">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="20" x2="18" y2="10"/>
-                        <line x1="12" y1="20" x2="12" y2="4"/>
-                        <line x1="6" y1="20" x2="6" y2="14"/>
-                    </svg>
-                    热点分析
-                </h2>
-            </div>
-            <div class="analysis-card">
-                <div class="word-cloud" id="wordCloud">
-                    <div class="word-tag level-1">大模型 <span class="count">42</span></div>
-                    <div class="word-tag level-2">算力 <span class="count">28</span></div>
-                    <div class="word-tag level-3">AGI <span class="count">21</span></div>
-                    <div class="word-tag level-4">Claude <span class="count">18</span></div>
-                    <div class="word-tag level-5">GPT-5 <span class="count">15</span></div>
-                    <div class="word-tag level-1">OpenAI <span class="count">14</span></div>
-                    <div class="word-tag level-2">Agent <span class="count">12</span></div>
-                    <div class="word-tag level-3">多模态 <span class="count">11</span></div>
-                    <div class="word-tag level-4">文心 <span class="count">9</span></div>
-                    <div class="word-tag level-5">Sora <span class="count">8</span></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Bottom Spacer -->
-        <div class="content-spacer"></div>
-
-        <!-- Bottom Nav -->
-        <nav class="bottom-nav">
-            <div class="nav-item active">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
-                </svg>
+        <nav class="bottom-nav" id="bottomNav" aria-label="主导航">
+            <button type="button" class="nav-item active" data-nav="hot">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
                 <span>热点</span>
-            </div>
-            <div class="nav-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                </svg>
+            </button>
+            <button type="button" class="nav-item" data-nav="history">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 <span>历史</span>
-            </div>
-            <div class="nav-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="20" x2="18" y2="10"/>
-                    <line x1="12" y1="20" x2="12" y2="4"/>
-                    <line x1="6" y1="20" x2="6" y2="14"/>
-                </svg>
+            </button>
+            <button type="button" class="nav-item" data-nav="analysis">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
                 <span>分析</span>
-            </div>
-            <div class="nav-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                </svg>
+            </button>
+            <button type="button" class="nav-item" data-nav="settings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 7.68 15 1.65 1.65 0 0 0 9 14.09V12a10 10 0 0 1 1-18.09V12"/></svg>
                 <span>设置</span>
-            </div>
+            </button>
         </nav>
-    </div>
 
-    <!-- Toast -->
-    <div class="toast" id="toast"></div>
+        <button type="button" class="back-top" id="backTop" aria-label="返回顶部">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
+
+        <div class="reader" id="reader">
+            <div class="reader-toolbar">
+                <button type="button" class="icon-btn" id="readerClose" aria-label="关闭">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <h2 id="readerTitle"></h2>
+            </div>
+            <p class="reader-meta" id="readerMeta"></p>
+            <div class="reader-body" id="readerBody"></div>
+        </div>
+
+        <div class="toast" id="toast" role="status"></div>
+    </div>
 
     <script>
-        // Platform selection toggle
-        document.querySelectorAll('.platform-item').forEach(item => {
-            item.addEventListener('click', () => {
-                item.classList.toggle('selected');
-                updatePlatformCounts();
-            });
-        });
+        const PLATFORMS = [
+            { id: "weibo", name: "微博热搜", icon: "微", bg: "#e6162d", badgeBg: "#FF3B3022", badgeFg: "#C41E20" },
+            { id: "zhihu", name: "知乎热榜", icon: "知", bg: "#0066ff", badgeBg: "#007AFF22", badgeFg: "#0066CC" },
+            { id: "baidu_hot", name: "百度热搜", icon: "搜", bg: "#2932e5", badgeBg: "#5856D622", badgeFg: "#3634A3" },
+            { id: "douyin", name: "抖音热榜", icon: "抖", bg: "#111111", badgeBg: "#00000033", badgeFg: "#555555" },
+            { id: "toutiao", name: "今日头条", icon: "条", bg: "#ff2d55", badgeBg: "#FF2D5522", badgeFg: "#C41E3A" },
+            { id: "bilibili", name: "B站热门", icon: "B", bg: "#ff6b9d", badgeBg: "#FF2D5522", badgeFg: "#C41E3A" },
+            { id: "tencent", name: "腾讯新闻", icon: "腾", bg: "#12b7f5", badgeBg: "#12b7f522", badgeFg: "#0d8ecf" },
+            { id: "netease", name: "网易热点", icon: "易", bg: "#c20c0c", badgeBg: "#c20c0c22", badgeFg: "#a00a0a" },
+            { id: "tieba", name: "贴吧热议", icon: "吧", bg: "#4879bd", badgeBg: "#4879bd22", badgeFg: "#3a6199" },
+            { id: "36kr", name: "36氪", icon: "氪", bg: "#00b369", badgeBg: "#34C75922", badgeFg: "#248A3D" },
+            { id: "baidu", name: "百度新闻", icon: "闻", bg: "#2932e5", badgeBg: "#5856D622", badgeFg: "#3634A3", searchOnly: true },
+            { id: "xiaohongshu", name: "小红书", icon: "红", bg: "#ff2442", badgeBg: "#ff244222", badgeFg: "#cc1c35", searchOnly: true },
+        ];
+        const SEARCH_ONLY = new Set(["baidu", "xiaohongshu"]);
 
-        // Update platform counts display
-        function updatePlatformCounts() {
-            const platforms = document.querySelectorAll('.platform-item');
-            let totalSelected = 0;
-            platforms.forEach(p => {
-                if (p.classList.contains('selected')) totalSelected++;
-            });
-            document.getElementById('statusCount').textContent = `${totalSelected} 个平台`;
+        const SAMPLE_ARTICLES = [
+            { platform: "知乎热榜", short: "知乎", badgeBg: "#007AFF22", badgeFg: "#0066CC", title: "OpenAI 发布 GPT-5，性能全面超越 GPT-4", hot: "3200万", meta: "2小时前" },
+            { platform: "B站热门", short: "B站", badgeBg: "#FF2D5522", badgeFg: "#C41E3A", title: "【深度解析】为什么说 AI Agent 是下一个风口？", hot: "156万", meta: "5小时前" },
+            { platform: "36氪", short: "36氪", badgeBg: "#34C75922", badgeFg: "#248A3D", title: "估值 50 亿美元！AI 编程独角兽 Cursor 获新一轮融资", hot: "286万", meta: "8小时前" },
+            { platform: "微博热搜", short: "微博", badgeBg: "#FF3B3022", badgeFg: "#C41E20", title: "多地出台 AI 产业扶持政策，算力券成新热点", hot: "452万", meta: "12小时前" },
+            { platform: "百度热搜", short: "热搜", badgeBg: "#5856D622", badgeFg: "#3634A3", title: "文心大模型 4.0 发布，中文理解能力引关注", hot: "198万", meta: "1天前" },
+            { platform: "抖音热榜", short: "抖音", badgeBg: "#00000033", badgeFg: "#555555", title: "Sora 全面开放实测，这 10 个功能太炸裂", hot: "289万", meta: "1天前" },
+        ];
+
+        const SAMPLE_WORDS = [
+            ["大模型", 42], ["算力", 28], ["AGI", 21], ["Claude", 18], ["GPT", 15],
+            ["OpenAI", 14], ["Agent", 12], ["多模态", 11], ["文心", 9], ["Sora", 8],
+        ];
+
+        let currentMode = "stream";
+        let platformOpen = false;
+        const platformSelected = new Set(PLATFORMS.map(p => p.id));
+
+        const scrollEl = document.getElementById("scroll");
+        const bottomNav = document.getElementById("bottomNav");
+        const backTop = document.getElementById("backTop");
+        let navVisible = true;
+        let lastScrollY = 0;
+
+        function nextHourLabel() {
+            const d = new Date();
+            d.setHours(d.getHours() + 1, 0, 0, 0);
+            return `${String(d.getHours()).padStart(2, "0")}:00`;
         }
 
-        // Fetch button click
-        document.getElementById('fetchBtn').addEventListener('click', function() {
-            const btn = this;
-            const statusIndicator = document.getElementById('statusIndicator');
-            const statusText = document.getElementById('statusText');
-            const statusCount = document.getElementById('statusCount');
-            const keyword = document.getElementById('keywordInput').value || 'AI';
+        function showToast(msg) {
+            const t = document.getElementById("toast");
+            t.textContent = msg;
+            t.classList.add("show");
+            setTimeout(() => t.classList.remove("show"), 2200);
+        }
 
-            // Add loading state
-            btn.classList.add('loading');
-            statusIndicator.classList.add('active');
-            statusText.textContent = `正在抓取 ${keyword}...`;
-
-            // Simulate fetch progress
-            const platforms = ['知乎', '36氪', 'B站', '百度'];
-            let currentPlatform = 0;
-
-            const progressInterval = setInterval(() => {
-                if (currentPlatform < platforms.length) {
-                    statusText.textContent = `正在抓取... ${platforms[currentPlatform]}`;
-                    currentPlatform++;
+        function renderPlatformGrid() {
+            const grid = document.getElementById("platformGrid");
+            grid.innerHTML = "";
+            for (let i = 0; i < PLATFORMS.length; i += 2) {
+                const row = document.createElement("div");
+                row.className = "platform-row";
+                for (let j = i; j < i + 2 && j < PLATFORMS.length; j++) {
+                    const p = PLATFORMS[j];
+                    const sel = platformSelected.has(p.id);
+                    const dimmed = SEARCH_ONLY.has(p.id) && currentMode === "stream";
+                    const chip = document.createElement("div");
+                    chip.className = `platform-chip${sel ? " selected" : ""}${dimmed ? " dimmed" : ""}`;
+                    chip.dataset.id = p.id;
+                    const sub = p.searchOnly ? '<span class="chip-sub warn">仅定制</span>' : (sel ? '<span class="chip-sub">已选</span>' : "");
+                    chip.innerHTML = `
+                        <div class="chip-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+                        <div class="chip-icon" style="background:${p.bg}">${p.icon}</div>
+                        <div class="chip-info">
+                            <div class="chip-name">${p.name}</div>
+                            ${sub}
+                        </div>`;
+                    chip.addEventListener("click", () => togglePlatform(p.id));
+                    row.appendChild(chip);
                 }
-            }, 500);
-
-            // Simulate fetch complete
-            setTimeout(() => {
-                clearInterval(progressInterval);
-                btn.classList.remove('loading');
-                statusIndicator.classList.remove('active');
-                statusText.textContent = '抓取完成';
-                statusCount.textContent = '35 条结果';
-
-                showToast('成功抓取 35 条热点内容', 'success');
-            }, 3000);
-        });
-
-        // History button click
-        document.getElementById('historyBtn').addEventListener('click', function() {
-            showToast('正在加载历史记录...', 'success');
-        });
-
-        // Article link click
-        document.querySelectorAll('.article-link').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.stopPropagation();
-                showToast('正在打开链接...', 'success');
-            });
-        });
-
-        // Article card click
-        document.querySelectorAll('.article-card').forEach(card => {
-            card.addEventListener('click', () => {
-                showToast('点击卡片查看详情', 'success');
-            });
-        });
-
-        // Word tag click
-        document.querySelectorAll('.word-tag').forEach(tag => {
-            tag.addEventListener('click', () => {
-                const word = tag.textContent.trim().split(' ')[0];
-                document.getElementById('keywordInput').value = word;
-                showToast(`已搜索: ${word}`, 'success');
-            });
-        });
-
-        // Bottom nav click
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', () => {
-                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-                item.classList.add('active');
-            });
-        });
-
-        // Toast function
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.className = `toast ${type} show`;
-
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 2500);
+                grid.appendChild(row);
+            }
+            updatePlatformSummary();
         }
+
+        function updatePlatformSummary() {
+            document.getElementById("platformSummary").textContent =
+                `已选 ${platformSelected.size}/${PLATFORMS.length}`;
+        }
+
+        function togglePlatform(id) {
+            if (SEARCH_ONLY.has(id) && currentMode === "stream") {
+                showToast("该平台仅支持「定制热点」模式");
+                return;
+            }
+            if (platformSelected.has(id)) platformSelected.delete(id);
+            else platformSelected.add(id);
+            renderPlatformGrid();
+        }
+
+        function renderArticles(list) {
+            const el = document.getElementById("articleList");
+            if (!list.length) {
+                el.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-6l-2 3H10l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><h3>暂无结果</h3><p>刷新或调整筛选条件</p></div>`;
+                return;
+            }
+            el.innerHTML = list.map((a, i) => {
+                const meta = [a.hot ? `${a.hot} 热度` : "", a.meta].filter(Boolean).join(" · ");
+                const div = i < list.length - 1 ? '<div class="divider"></div>' : "";
+                return `
+                    <div class="article-row" data-title="${a.title}">
+                        <span class="badge" style="background:${a.badgeBg};color:${a.badgeFg}">${a.short}</span>
+                        <div class="article-body">
+                            <div class="article-title">${a.title}</div>
+                            ${meta ? `<div class="article-meta">${meta}</div>` : ""}
+                        </div>
+                        <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    </div>${div}`;
+            }).join("");
+            el.querySelectorAll(".article-row").forEach(row => {
+                row.addEventListener("click", () => openReader(row.dataset.title));
+            });
+        }
+
+        function renderWords() {
+            const el = document.getElementById("wordCloud");
+            const levels = ["var(--tag-1-bg)", "var(--tag-2-bg)", "var(--tag-3-bg)", "var(--tag-4-bg)", "var(--tag-5-bg)"];
+            const fgs = ["var(--tag-1-fg)", "var(--tag-2-fg)", "var(--tag-3-fg)", "var(--tag-4-fg)", "var(--tag-5-fg)"];
+            el.innerHTML = SAMPLE_WORDS.map((w, i) =>
+                `<span class="word-tag" style="background:${levels[i % 5]};color:${fgs[i % 5]}" data-word="${w[0]}">${w[0]} <span class="cnt">${w[1]}</span></span>`
+            ).join("");
+            el.querySelectorAll(".word-tag").forEach(tag => {
+                tag.addEventListener("click", () => {
+                    if (currentMode !== "custom") setMode("custom");
+                    document.getElementById("keywordInput").value = tag.dataset.word;
+                    showToast(`已填入关键词: ${tag.dataset.word}`);
+                });
+            });
+        }
+
+        function fillPlatformFilter() {
+            const sel = document.getElementById("platformFilter");
+            PLATFORMS.forEach(p => {
+                const o = document.createElement("option");
+                o.value = p.name;
+                o.textContent = p.name;
+                sel.appendChild(o);
+            });
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll(".segmented button").forEach(b => {
+                b.classList.toggle("active", b.dataset.mode === mode);
+            });
+            const isCustom = mode === "custom";
+            document.getElementById("modeHint").textContent = isCustom
+                ? "按关键词过滤热榜内容；百度新闻将直接搜索该词"
+                : "抓取各平台当前热榜，全量展示，无需关键词";
+            document.getElementById("kwLabel").style.display = isCustom ? "flex" : "none";
+            document.getElementById("keywordInput").classList.toggle("hidden", !isCustom);
+            document.getElementById("statusText").textContent =
+                isCustom ? "就绪 · 定制热点" : "就绪 · 实时流热点";
+            renderPlatformGrid();
+        }
+
+        function openReader(title) {
+            const art = SAMPLE_ARTICLES.find(a => a.title === title) || SAMPLE_ARTICLES[0];
+            document.getElementById("readerTitle").textContent = art.title;
+            document.getElementById("readerMeta").textContent =
+                [art.platform, art.hot ? `${art.hot} 热度` : "", art.meta].filter(Boolean).join(" · ");
+            document.getElementById("readerBody").textContent =
+                "（原型）应用内阅读层：摘要正文加载中…\n\n真实应用中由 ArticleReader 展示摘要与 WebView 原文。";
+            document.getElementById("reader").classList.add("open");
+            bottomNav.classList.add("hidden");
+            backTop.classList.remove("show");
+        }
+
+        function closeReader() {
+            document.getElementById("reader").classList.remove("open");
+            bottomNav.classList.remove("hidden");
+        }
+
+        function applyFilter() {
+            const kw = (document.getElementById("filterInput").value || "").trim().toLowerCase();
+            const plat = document.getElementById("platformFilter").value;
+            let list = [...SAMPLE_ARTICLES];
+            if (plat !== "all") list = list.filter(a => a.platform === plat);
+            if (kw) list = list.filter(a => a.title.toLowerCase().includes(kw));
+            document.getElementById("resultCount").textContent =
+                list.length === SAMPLE_ARTICLES.length ? `${list.length} 条结果` : `${list.length} / ${SAMPLE_ARTICLES.length} 条`;
+            renderArticles(list);
+        }
+
+        document.querySelectorAll(".segmented button").forEach(btn => {
+            btn.addEventListener("click", () => setMode(btn.dataset.mode));
+        });
+
+        document.getElementById("platformToggle").addEventListener("click", () => {
+            platformOpen = !platformOpen;
+            document.getElementById("platformGrid").classList.toggle("open", platformOpen);
+            document.getElementById("platformChevron").innerHTML = platformOpen
+                ? '<polyline points="6 9 12 15 18 9"/>'
+                : '<polyline points="9 18 15 12 9 6"/>';
+        });
+
+        document.getElementById("hourlySwitch").addEventListener("click", function () {
+            this.classList.toggle("on");
+            const on = this.classList.contains("on");
+            this.setAttribute("aria-checked", on);
+            document.getElementById("refreshHint").textContent = on
+                ? `打开时自动刷新 · 下次整点 ${nextHourLabel()}`
+                : "打开时自动刷新 · 整点刷新已关闭";
+        });
+
+        document.getElementById("fetchBtn").addEventListener("click", function () {
+            this.classList.add("loading");
+            const dot = document.getElementById("statusDot");
+            dot.classList.add("active");
+            const label = currentMode === "custom"
+                ? `「${document.getElementById("keywordInput").value || "AI"}」`
+                : "全站热榜";
+            document.getElementById("statusText").textContent = `手动刷新中 · ${label}...`;
+            setTimeout(() => {
+                this.classList.remove("loading");
+                dot.classList.remove("active");
+                document.getElementById("statusText").textContent =
+                    `手动 · ${currentMode === "custom" ? "定制热点" : "实时流热点"} — 共 ${SAMPLE_ARTICLES.length} 条`;
+                document.getElementById("statusCount").textContent = `${SAMPLE_ARTICLES.length} 条结果`;
+                showToast(`刷新完成（演示）`);
+            }, 1500);
+        });
+
+        document.getElementById("historyBtn").addEventListener("click", () => {
+            showToast("加载历史记录（演示）");
+            document.getElementById("statusText").textContent =
+                `已加载 ${currentMode === "custom" ? "定制热点" : "实时流热点"} 历史 ${SAMPLE_ARTICLES.length} 条`;
+        });
+
+        document.getElementById("themeToggle").addEventListener("click", () => {
+            const html = document.documentElement;
+            const next = html.dataset.theme === "dark" ? "light" : "dark";
+            html.dataset.theme = next;
+            document.getElementById("themeIcon").innerHTML = next === "dark"
+                ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+                : '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+        });
+
+        document.querySelectorAll(".nav-item").forEach(item => {
+            item.addEventListener("click", () => {
+                document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+                item.classList.add("active");
+                bottomNav.classList.remove("hidden");
+                const id = item.dataset.nav;
+                const targets = {
+                    hot: "section-hot",
+                    history: "section-hot",
+                    analysis: "section-analysis",
+                    settings: "section-settings",
+                };
+                const el = document.getElementById(targets[id]);
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                if (id === "history") document.getElementById("historyBtn").click();
+            });
+        });
+
+        scrollEl.addEventListener("scroll", () => {
+            const y = scrollEl.scrollTop;
+            backTop.classList.toggle("show", y > 200);
+            if (y <= 48 || y >= scrollEl.scrollHeight - scrollEl.clientHeight - 72) {
+                bottomNav.classList.remove("hidden");
+            } else if (y > lastScrollY + 8) {
+                bottomNav.classList.add("hidden");
+            } else if (y < lastScrollY - 8) {
+                bottomNav.classList.remove("hidden");
+            }
+            lastScrollY = y;
+        });
+
+        backTop.addEventListener("click", () => {
+            scrollEl.scrollTo({ top: 0, behavior: "smooth" });
+            document.querySelector('.nav-item[data-nav="hot"]').classList.add("active");
+        });
+
+        document.getElementById("readerClose").addEventListener("click", closeReader);
+        document.getElementById("filterInput").addEventListener("input", applyFilter);
+        document.getElementById("platformFilter").addEventListener("change", applyFilter);
+
+        document.getElementById("refreshHint").textContent =
+            `打开时自动刷新 · 下次整点 ${nextHourLabel()}`;
+
+        renderPlatformGrid();
+        renderArticles(SAMPLE_ARTICLES);
+        renderWords();
+        fillPlatformFilter();
     </script>
-
-<style>
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-}
-
-.inland-security-footer {
-  position: fixed;
-  z-index: 10;
-  bottom: 0;
-  right: 0;
-  width: fit-content;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.tooltip-container {
-  position: relative;
-}
-
-.trigger-content {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-  background-color: transparent;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.minimax-link {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  font-weight: 300;
-  color: #adadad;
-  text-decoration: none;
-}
-
-.minimax-link:visited {
-  color: #adadad;
-}
-
-.minimax-link:hover {
-  color: #666666;
-}
-
-.tooltip-content {
-  position: absolute;
-  bottom: 100%;
-  right: 0;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 8px;
-  padding-bottom: 16px; /* 8px 内容间距 + 8px 用于鼠标移动的透明区域 */
-  font-size: 12px;
-  line-height: 17px;
-  background-color: #fafafa;
-  border-radius: 12px;
-  white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  color: #171717;
-}
-
-/* 创建透明的连接区域，让鼠标可以平滑移动到 tooltip */
-.tooltip-content::after {
-  content: '';
-  position: absolute;
-  bottom: -8px;
-  left: 0;
-  right: 0;
-  height: 16px;
-}
-
-.tooltip-container:hover .tooltip-content {
-  display: flex;
-}
-
-.info-section {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-}
-
-.beian-link {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-  color: #171717;
-}
-
-.beian-icon {
-  width: 14px;
-  height: 14px;
-  margin-right: 2px;
-}
-
-.underline-text {
-  color: #171717;
-  text-decoration: underline;
-}
-
-.underline-text:hover {
-  color: #000000;
-}
-
-/* 深色模式支持 */
-@media (prefers-color-scheme: dark) {
-  .trigger-content {
-    background-color: transparent;
-  }
-
-  .minimax-link,
-  .minimax-link:visited {
-    color: #666666;
-  }
-
-  .minimax-link:hover {
-    color: #adadad;
-  }
-
-  .tooltip-content {
-    background-color: #262626;
-    color: #ededed;
-  }
-
-  .beian-link,
-  .underline-text {
-    color: #ededed;
-  }
-
-  .underline-text:hover {
-    color: #ffffff;
-  }
-}
-
-</style>
-<div class="inland-security-footer">
-  <div class="tooltip-container">
-    <div class="trigger-content">
-      <a href="https://www.minimaxi.com/" target="_blank" rel="noreferrer" class="minimax-link">
-        <span>© 2026 MiniMax</span>
-      </a>
-    </div>
-    <div class="tooltip-content">
-      <section class="info-section">
-        <span>上海稀宇科技有限公司</span>
-      </section>
-
-      <section class="info-section">
-        <a class="beian-link" href="https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=31010402010179" target="_blank" rel="noreferrer">
-          <img alt="hailuo-beian-icon" src="https://cdn.hailuoai.com/hailuo-video-web/public_assets/223037d3-79fd-4db0-a456-749f38a6a14b.png" class="beian-icon">
-          <span class="underline-text">沪公网安备31010402010179号</span>
-        </a>
-        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer" class="underline-text">
-          沪ICP备2023003282号-38
-        </a>
-      </section>
-
-      <section class="info-section">
-        <span>模型名称：MiniMax</span>
-        <span>备案号：Shanghai-MiniMax-202505230046</span>
-      </section>
-
-      <section class="info-section">
-        <a href="https://agent.minimaxi.com/doc/zh/terms-of-service.html" target="_blank" rel="noreferrer" class="underline-text">
-          用户协议
-        </a>
-        <a href="https://agent.minimaxi.com/doc/zh/privacy-policy.html" target="_blank" rel="noreferrer" class="underline-text">
-          隐私政策
-        </a>
-      </section>
-    </div>
-  </div>
-</div>
-
-
-<script>
-/**
- * Iframe 元素高亮注入脚本
- * 需要在目标网站中引入此脚本来支持跨域 iframe 高亮功能
- *
- * 使用方法：
- * 1. 将此脚本添加到目标网站的 HTML 中
- * 2. 或通过浏览器扩展、用户脚本等方式注入
- */
-
-(function () {
-  "use strict";
-
-  // 检查是否在 iframe 中
-  if (window.self === window.top) {
-    return; // 不在 iframe 中，不执行
-  }
-
-  // 检查是否已经初始化过
-  if (window.__iframeHighlightInitialized) {
-    return;
-  }
-  window.__iframeHighlightInitialized = true;
-  console.log("Iframe 高亮脚本已加载");
-
-  // 创建高亮覆盖层
-  var overlay = document.createElement("div");
-  overlay.id = "iframe-highlight-overlay";
-  overlay.style.cssText = "\n    position: fixed;\n    top: 0;\n    left: 0;\n    width: 100vw;\n    height: 100vh;\n    pointer-events: none;\n    z-index: 999999;\n    overflow: hidden;\n  ";
-
-  // 创建悬停高亮框（虚线边框）
-  var highlightBox = document.createElement("div");
-  highlightBox.id = "iframe-highlight-box";
-  highlightBox.style.cssText = "\n    position: absolute;\n    border: 2px dashed #007AFF;\n    background: rgba(0, 122, 255, 0.08);\n    pointer-events: none;\n    display: none;\n    transition: all 0.1s ease;\n    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);\n    border-radius: 2px;\n  ";
-
-  // 创建选中节点的常驻高亮框（实线边框）
-  var selectedBox = document.createElement("div");
-  selectedBox.id = "iframe-selected-box";
-  selectedBox.style.cssText = "\n    position: absolute;\n    border: 2px solid #007AFF;\n    pointer-events: none;\n    display: none;\n    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9), 0 0 8px rgba(255, 107, 53, 0.4);\n    border-radius: 2px;\n    z-index: 1000000;\n  ";
-
-  // 创建悬停标签显示
-  var tagLabel = document.createElement("div");
-  tagLabel.id = "iframe-tag-label";
-  tagLabel.style.cssText = "\n    position: absolute;\n    background: #007AFF;\n    color: white;\n    padding: 2px 6px;\n    font-size: 11px;\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;\n    border-radius: 2px;\n    pointer-events: none;\n    display: none;\n    white-space: nowrap;\n    z-index: 1000001;\n    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);\n    font-weight: 500;\n  ";
-
-  // 创建选中节点标签
-  var selectedLabel = document.createElement("div");
-  selectedLabel.id = "iframe-selected-label";
-  selectedLabel.style.cssText = "\n    position: absolute;\n    background: #007AFF;\n    color: white;\n    padding: 3px 8px;\n    font-size: 11px;\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;\n    border-radius: 3px;\n    pointer-events: none;\n    display: none;\n    white-space: nowrap;\n    z-index: 1000002;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);\n    font-weight: 600;\n  ";
-  overlay.appendChild(highlightBox);
-  overlay.appendChild(selectedBox);
-  overlay.appendChild(tagLabel);
-  overlay.appendChild(selectedLabel);
-  document.body.appendChild(overlay);
-
-  // 存储当前选中的元素
-  var selectedElement = null;
-  var highlightEnabled = false;
-
-  // 更新选中元素的高亮显示
-  function updateSelectedHighlight(element) {
-    console.log("updateSelectedHighlight called with:", element);
-    if (!element) {
-      selectedBox.style.display = "none";
-      selectedLabel.style.display = "none";
-      selectedElement = null;
-      console.log("Cleared selected highlight");
-      return;
-    }
-    selectedElement = element;
-    var rect = element.getBoundingClientRect();
-    console.log("Selected element rect:", rect);
-
-    // 更新选中高亮框位置
-    selectedBox.style.display = "block";
-    selectedBox.style.left = "".concat(rect.left - 2, "px");
-    selectedBox.style.top = "".concat(rect.top - 2, "px");
-    selectedBox.style.width = "".concat(rect.width + 4, "px");
-    selectedBox.style.height = "".concat(rect.height + 4, "px");
-
-    // 更新选中标签位置和内容
-    selectedLabel.style.display = "block";
-    selectedLabel.textContent = "\u2713 <".concat(element.tagName.toLowerCase(), ">");
-
-    // 计算标签位置，确保不超出视窗
-    var labelTop = rect.top - 28;
-    var labelLeft = rect.left;
-
-    // 如果标签会超出顶部，显示在元素下方
-    if (labelTop < 5) {
-      labelTop = rect.bottom + 5;
-    }
-
-    // 如果标签会超出右侧，向左调整
-    var labelWidth = selectedLabel.offsetWidth || 100; // 预估宽度
-    if (labelLeft + labelWidth > window.innerWidth - 10) {
-      labelLeft = window.innerWidth - labelWidth - 10;
-    }
-    selectedLabel.style.left = "".concat(Math.max(5, labelLeft), "px");
-    selectedLabel.style.top = "".concat(labelTop, "px");
-    console.log("Selected highlight positioned at:", {
-      left: selectedBox.style.left,
-      top: selectedBox.style.top,
-      width: selectedBox.style.width,
-      height: selectedBox.style.height
-    });
-  }
-  function getElementSelector(element) {
-    if (!(element instanceof Element)) throw new Error('Argument must be a DOM element');
-    var segments = [];
-    var current = element;
-    while (current !== document.documentElement) {
-      var selector = '';
-      // 优先检查唯一ID
-      if (current.id && document.querySelectorAll("#".concat(current.id)).length === 1) {
-        segments.unshift("#".concat(current.id));
-        break; // ID唯一，无需继续向上
-      }
-
-      // 生成类名选择器（取第一个有效类名）
-      var classes = Array.from(current.classList).filter(function (c) {
-        return !c.startsWith('js-');
-      });
-      var className = classes.length > 0 ? ".".concat(classes[0]) : '';
-
-      // 生成位置索引（nth-child）
-      var tag = current.tagName.toLowerCase();
-      if (!className) {
-        var siblings = Array.from(current.parentNode.children);
-        var index = siblings.findIndex(function (el) {
-          return el === current;
-        }) + 1;
-        selector = "".concat(tag, ":nth-child(").concat(index, ")");
-      } else {
-        selector = className;
-      }
-      segments.unshift(selector);
-      current = current.parentElement;
-    }
-
-    // 处理根元素
-    if (current === document.documentElement) {
-      segments.unshift('html');
-    }
-    return segments.join(' > ');
-  }
-
-  // 获取元素文本内容
-  function getElementText(element) {
-    var _element$textContent;
-    if (element.tagName === "INPUT") {
-      return element.value || element.placeholder || "";
-    }
-    if (element.tagName === "TEXTAREA") {
-      return element.value || element.placeholder || "";
-    }
-    var text = ((_element$textContent = element.textContent) === null || _element$textContent === void 0 ? void 0 : _element$textContent.trim()) || "";
-    return text.length > 50 ? text.substring(0, 50) + "..." : text;
-  }
-
-  // 获取元素属性信息
-  function getElementAttributes(element) {
-    var attrs = {};
-    for (var i = 0; i < element.attributes.length; i++) {
-      var attr = element.attributes[i];
-      attrs[attr.name] = attr.value;
-    }
-    return attrs;
-  }
-
-  // 鼠标悬停事件处理
-  function handleMouseOver(e) {
-    if (!highlightEnabled) return;
-    var target = e.target;
-    if (!target || target === overlay || target === highlightBox || target === tagLabel || target === selectedBox || target === selectedLabel) {
-      return;
-    }
-
-    // 避免高亮 html 和 body 元素
-    if (target === document.documentElement || target === document.body) {
-      return;
-    }
-
-    // 如果是已选中的元素，不显示悬停高亮
-    if (target === selectedElement) {
-      highlightBox.style.display = "none";
-      tagLabel.style.display = "none";
-      return;
-    }
-    var rect = target.getBoundingClientRect();
-    var selector = getElementSelector(target);
-    var text = getElementText(target);
-    var attributes = getElementAttributes(target);
-
-    // 更新悬停高亮框位置
-    highlightBox.style.display = "block";
-    highlightBox.style.left = "".concat(rect.left - 2, "px");
-    highlightBox.style.top = "".concat(rect.top - 2, "px");
-    highlightBox.style.width = "".concat(rect.width + 4, "px");
-    highlightBox.style.height = "".concat(rect.height + 4, "px");
-
-    // 更新标签位置和内容
-    tagLabel.style.display = "block";
-    tagLabel.textContent = "<".concat(target.tagName.toLowerCase(), ">");
-
-    // 计算标签位置，确保不超出视窗
-    var labelTop = rect.top - 22;
-    var labelLeft = rect.left;
-
-    // 如果标签会超出顶部，显示在元素下方
-    if (labelTop < 0) {
-      labelTop = rect.bottom + 5;
-    }
-
-    // 如果标签会超出右侧，向左调整
-    if (labelLeft + tagLabel.offsetWidth > window.innerWidth) {
-      labelLeft = window.innerWidth - tagLabel.offsetWidth - 5;
-    }
-    tagLabel.style.left = "".concat(Math.max(0, labelLeft), "px");
-    tagLabel.style.top = "".concat(labelTop, "px");
-
-    // 发送消息到父窗口
-    var elementInfo = {
-      tagName: target.tagName.toLowerCase(),
-      rect: {
-        left: rect.left,
-        top: rect.top,
-        right: rect.right,
-        bottom: rect.bottom,
-        width: rect.width,
-        height: rect.height,
-        x: rect.x,
-        y: rect.y
-      },
-      selector: selector,
-      text: text,
-      attributes: attributes,
-      url: window.location.href,
-      path: window.location.pathname,
-      timestamp: Date.now()
-    };
-    try {
-      window.parent.postMessage({
-        type: "iframe-element-hover",
-        data: elementInfo,
-        source: "iframe-highlight-injector"
-      }, "*");
-    } catch (error) {
-      console.warn("无法发送消息到父窗口:", error);
-    }
-  }
-
-  // 鼠标离开事件处理
-  function handleMouseOut(e) {
-    if (!highlightEnabled) return;
-    var relatedTarget = e.relatedTarget;
-
-    // 如果鼠标移动到高亮相关元素上，不隐藏高亮
-    if (relatedTarget && (relatedTarget === highlightBox || relatedTarget === tagLabel || relatedTarget === overlay || relatedTarget === selectedBox || relatedTarget === selectedLabel)) {
-      return;
-    }
-    highlightBox.style.display = "none";
-    tagLabel.style.display = "none";
-    try {
-      window.parent.postMessage({
-        type: "iframe-element-hover",
-        data: null,
-        source: "iframe-highlight-injector"
-      }, "*");
-    } catch (error) {
-      console.warn("无法发送消息到父窗口:", error);
-    }
-  }
-
-  // 点击事件处理
-  function handleClick(e) {
-    var target = e.target;
-    if (!target || target === overlay || target === highlightBox || target === tagLabel || target === selectedBox || target === selectedLabel) {
-      return;
-    }
-
-    // 避免处理 html 和 body 元素
-    if (target === document.documentElement || target === document.body) {
-      return;
-    }
-
-    // 检查是否是交互元素，这些元素需要保留默认行为
-    var isInteractiveElement = ['input', 'textarea', 'select', 'button', 'a'].includes(target.tagName.toLowerCase());
-
-    // 如果高亮功能启用，对于非交互元素阻止默认行为和事件传播
-    if (highlightEnabled) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    var rect = target.getBoundingClientRect();
-    var selector = getElementSelector(target);
-    var text = getElementText(target);
-    var attributes = getElementAttributes(target);
-    console.log("Element clicked:", {
-      tagName: target.tagName,
-      selector: selector,
-      rect: rect
-    });
-
-    // 立即更新选中高亮
-    updateSelectedHighlight(target);
-
-    // 隐藏悬停高亮，因为现在是选中状态
-    highlightBox.style.display = "none";
-    tagLabel.style.display = "none";
-    var elementInfo = {
-      tagName: target.tagName.toLowerCase(),
-      rect: {
-        left: rect.left,
-        top: rect.top,
-        right: rect.right,
-        bottom: rect.bottom,
-        width: rect.width,
-        height: rect.height,
-        x: rect.x,
-        y: rect.y
-      },
-      selector: selector,
-      text: text,
-      attributes: attributes,
-      url: window.location.href,
-      path: window.location.pathname,
-      timestamp: Date.now()
-    };
-    try {
-      window.parent.postMessage({
-        type: "iframe-element-click",
-        data: elementInfo,
-        source: "iframe-highlight-injector"
-      }, "*");
-    } catch (error) {
-      console.warn("无法发送消息到父窗口:", error);
-    }
-  }
-
-  // 监听来自父窗口的消息
-  function handleParentMessage(event) {
-    console.log("Received message from parent:", event.data);
-    if (event.data.type === "iframe-highlight-toggle") {
-      var enabled = event.data.enabled;
-      console.log("Highlight toggle:", enabled);
-      if (enabled) {
-        enableHighlight();
-      } else {
-        disableHighlight();
-      }
-    } else if (event.data.type === "enable-iframe-highlight") {
-      console.log("Enable iframe highlight");
-      enableHighlight();
-    } else if (event.data.type === "disable-iframe-highlight") {
-      console.log("Disable iframe highlight");
-      disableHighlight();
-    } else if (event.data.type === "toggle-iframe-highlight") {
-      var _enabled = event.data.enabled !== undefined ? event.data.enabled : !highlightEnabled;
-      console.log("Toggle iframe highlight to:", _enabled);
-      if (_enabled) {
-        enableHighlight();
-      } else {
-        disableHighlight();
-      }
-    } else if (event.data.type === "update-selected-element") {
-      var selector = event.data.selector;
-      console.log("Update selected element with selector:", selector);
-      if (selector) {
-        try {
-          var element = document.querySelector(selector);
-          console.log("Found element by selector:", element);
-          updateSelectedHighlight(element);
-        } catch (error) {
-          console.warn("Failed to select element:", error);
-          updateSelectedHighlight(null);
-        }
-      } else {
-        updateSelectedHighlight(null);
-      }
-    } else if (event.data.type === "clear-selected-element") {
-      console.log("Clear selected element");
-      updateSelectedHighlight(null);
-    }
-  }
-
-  // 启用高亮功能
-  function enableHighlight() {
-    console.log("Enabling highlight");
-    document.addEventListener("mouseover", handleMouseOver, true);
-    document.addEventListener("mouseout", handleMouseOut, true);
-    document.addEventListener("click", handleClick, true);
-    highlightEnabled = true;
-    overlay.style.display = "block";
-  }
-
-  // 禁用高亮功能
-  function disableHighlight() {
-    console.log("Disabling highlight");
-    highlightEnabled = false;
-    // 保持事件监听器，但通过 highlightEnabled 变量控制行为
-    // 这样可以保留选中状态的显示
-    highlightBox.style.display = "none";
-    tagLabel.style.display = "none";
-    // 不隐藏 selectedBox 和 selectedLabel，保留选中状态
-  }
-
-  // 完全禁用高亮功能（移除所有监听器）
-  function fullyDisableHighlight() {
-    console.log("Fully disabling highlight");
-    highlightEnabled = false;
-    document.removeEventListener("mouseover", handleMouseOver, true);
-    document.removeEventListener("mouseout", handleMouseOut, true);
-    document.removeEventListener("click", handleClick, true);
-    overlay.style.display = "none";
-    highlightBox.style.display = "none";
-    tagLabel.style.display = "none";
-    selectedBox.style.display = "none";
-    selectedLabel.style.display = "none";
-  }
-
-  // 添加事件监听
-  enableHighlight();
-  window.addEventListener("message", handleParentMessage);
-
-  // 暴露全局函数供外部调用
-  window.__iframeHighlightControl = {
-    enable: enableHighlight,
-    disable: disableHighlight,
-    fullyDisable: fullyDisableHighlight,
-    isEnabled: function isEnabled() {
-      return highlightEnabled;
-    },
-    getSelectedElement: function getSelectedElement() {
-      return selectedElement;
-    },
-    updateSelected: updateSelectedHighlight,
-    // 通过消息发送开关控制
-    sendToggleMessage: function sendToggleMessage(enabled) {
-      window.parent.postMessage({
-        type: 'iframe-highlight-status',
-        enabled: enabled || highlightEnabled,
-        source: 'iframe-highlight-injector'
-      }, '*');
-    }
-  };
-
-  // 通知父窗口脚本已加载
-  try {
-    window.parent.postMessage({
-      type: "iframe-highlight-ready",
-      data: {
-        url: window.location.href,
-        userAgent: navigator.userAgent,
-        timestamp: Date.now()
-      },
-      source: "iframe-highlight-injector"
-    }, "*");
-  } catch (error) {
-    console.warn("无法发送就绪消息到父窗口:", error);
-  }
-
-  // 清理函数
-  window.__iframeHighlightCleanup = function () {
-    fullyDisableHighlight();
-    window.removeEventListener("message", handleParentMessage);
-    if (overlay.parentElement) {
-      overlay.parentElement.removeChild(overlay);
-    }
-    delete window.__iframeHighlightInitialized;
-    delete window.__iframeHighlightCleanup;
-  };
-})();
-
-</script>
 </body>
 </html>
